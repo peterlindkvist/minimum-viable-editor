@@ -7,7 +7,7 @@ Adds a nice looking [medium-editor](https://yabwe.github.io/medium-editor/) to e
 with a data-mve attribute.
 
 To edit a page, add #editor (defined in config) to the url. And then click on the
-text you want to edit. Press ctrl + s or click the floppydisk in the lower right corner to save. 
+text you want to edit. Press ctrl + s or click the floppydisk in the lower right corner to save.
 
 ## Installation
 It will be added to NPM, soon.
@@ -34,7 +34,7 @@ And in the html add :
 
     <script type="text/javascript" src="/editor/assets/loader.js"></script>
 
-Add an extra data-mve attribute to every tag you want to edit. Use the (lodash)[https://lodash.com/docs/4.17.4#get] set/get format to define the data property.
+Add an extra data-mve attribute to every tag you want to edit. Use the [lodash)(https://lodash.com/docs/4.17.4#get) set/get format to define the data property.
 
 (here with handlebars as templating engine)
 
