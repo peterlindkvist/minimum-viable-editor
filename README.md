@@ -30,6 +30,8 @@ In your node app:
     app.use('/', index);  //uses the req.content when populating the templates.
     app.use('/editor', mve.routes()); //add the editor endpoints.
 
+Add a json file in the filePath folder with your content data. 
+
 And in the html add :
 
     <script type="text/javascript" src="/editor/assets/loader.js"></script>
