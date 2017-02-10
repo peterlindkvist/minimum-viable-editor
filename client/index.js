@@ -26,6 +26,7 @@ function addMediumEditorCSS(){
 
 function saveContent(content) {
   return (evt) => {
+    document.activeElement.blur();
     const options = {
       credentials: 'include',
       body : JSON.stringify(content),
@@ -57,6 +58,7 @@ function updateContent(content){
     const path = el.getAttribute('data-mve');
     el.innerHTML = _get(content, path);
     el.addEventListener('blur', (evt) => {
+      console.log('blur');
       _set(content, path, el.innerHTML);
     });
   };
