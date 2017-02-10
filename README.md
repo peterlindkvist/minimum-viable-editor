@@ -18,9 +18,9 @@ In your node app:
     });
 
     const app = express();
-    app.use(mve.content); // adds the content json to req.content
+    app.use(mve.addContent); // adds the content json to req.content
     app.use('/', index);  //uses the req.content when populating the templates.
-    app.use('/editor', mve.router); //add the editor endpoints.
+    app.use('/editor', mve.routes()); //add the editor endpoints.
 
 And in the html add :
 
@@ -40,10 +40,12 @@ Add an extra attribute to every tag you want to edit. (handlebars as templating 
 
 ## Security
 
-The editor doesn't provide any kind of security, its up to you. The simpliest way to do that is to secure the editor routes.
+The editor doesn't provide any kind of security by it own. But you can pass in a sequrity middleware to the routes.
 
     const auth = require('http-auth');
     const basicAuth = auth.connect(auth.basic({ realm: "Content Editor" }, (username, password, callback) => {
         callback(username === "user" && password === "pwd");
     }));
-    app.use('/editor', basicAuth, mve.router);
+    app.use('/editor', mve.router(basicAuth));
+
+If you add a security middleware to the whole route the js assets are blocked as well. 
