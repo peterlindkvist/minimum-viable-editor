@@ -59,3 +59,8 @@ The editor doesn't provide any kind of security by it own. But you can pass in a
     app.use('/editor', mve.router(basicAuth));
 
 If you add a security middleware to the whole route the js assets are blocked as well.
+
+## Editing of invissible elements
+
+Since its only possible to edit visible elements you have to create a different page and add these
+texts as normal elements. And edit and save them there. 
