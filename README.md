@@ -34,7 +34,7 @@ And in the html add :
 
     <script type="text/javascript" src="/editor/assets/loader.js"></script>
 
-Add an extra data-mve attribute to every tag you want to edit. Use the [lodash)(https://lodash.com/docs/4.17.4#get) set/get format to define the data property.
+Add an extra data-mve attribute to every tag you want to edit. Use the [lodash](https://lodash.com/docs/4.17.4#get) set/get format to define the data property.
 
 (here with handlebars as templating engine)
 
@@ -63,4 +63,4 @@ If you add a security middleware to the whole route the js assets are blocked as
 ## Editing of invissible elements
 
 Since its only possible to edit visible elements you have to create a different page and add these
-texts as normal elements. And edit and save them there. 
+texts as normal elements. And edit and save them there.
