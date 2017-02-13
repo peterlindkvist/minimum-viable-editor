@@ -20,17 +20,20 @@ In your node app:
     const mve = require('minimum-viable-editor');
 
     mve.init({
-     storage : 'file',
-     filePath : path.join(__dirname, 'data', 'content.json'),
-     hash : 'editor'
+      storage : 'file',
+      contentPath : path.join(__dirname, 'data', 'content.json'),
+      filesPath : path.join(__dirname, 'data', 'files'),
+      editorUrl : '/editor',
+      hash : 'editor'
     });
 
     const app = express();
     app.use(mve.addContent); // adds the content to req.content
     app.use('/', index);  //uses the req.content when populating the templates.
-    app.use('/editor', mve.routes()); //add the editor endpoints.
+    app.use('/editor', mve.assetsRouter); // add the public assets router
+    app.use('/editor', basicAuth, mve.contentRouter); // add the private content router (behind some kind of authentification)
 
-Add a json file in the filePath folder with your content data. 
+Add a json file in the filePath folder with your content data. And add the folder assets upload.
 
 And in the html add :
 
@@ -42,7 +45,8 @@ Add an extra data-mve attribute to every tag you want to edit. Use the [lodash](
 
     <div>
       <h3 data-mve="about.header">{{"about.header}}</h3>
-      {{#each about.section }}
+      <img data-mve="about.image" src="about.image.src" />
+      {{#each about.sections }}
         <div data-mve="about.@index.text">
           {{{text}}}
         </div>
@@ -52,15 +56,14 @@ Add an extra data-mve attribute to every tag you want to edit. Use the [lodash](
 
 ## Security
 
-The editor doesn't provide any kind of security by it own. But you can pass in a sequrity middleware to the routes.
+The editor doesn't provide any kind of security by it own. But you can add a middleware in front of the contentRouter.
 
     const auth = require('http-auth');
     const basicAuth = auth.connect(auth.basic({ realm: "Content Editor" }, (username, password, callback) => {
         callback(username === "user" && password === "pwd");
     }));
-    app.use('/editor', mve.router(basicAuth));
+    app.use('/editor', basicAuth, mve.contentRouter);
 
-If you add a security middleware to the whole route the js assets are blocked as well.
 
 ## Editing of invissible elements
 

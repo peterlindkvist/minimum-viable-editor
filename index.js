@@ -1,8 +1,11 @@
-const router = require('express').Router();
+const express = require('express');
 const bodyParser = require('body-parser');
+const fileUpload = require('express-fileupload');
 const path = require('path');
 const fs = require('fs');
 
+const contentRouter = express.Router();
+const assetsRouter = express.Router();
 let _config, _storage;
 
 function init(config){
@@ -26,41 +29,55 @@ function getContent(callback){
   _storage.load(callback);
 }
 
-function routes(securityMiddleware = ((req, res, next) => next())){
-  router.post('/content/', securityMiddleware, bodyParser.json(), (req, res, next) => {
-    _storage.save(req.body, function(err) {
-      getContent((err, data) => res.json(data));
-    });
-  });
-
-  router.get('/content/', securityMiddleware, (req, res, next) => {
+contentRouter.post('/content/', bodyParser.json(), (req, res, next) => {
+  _storage.save(req.body, function(err) {
     getContent((err, data) => res.json(data));
   });
+});
 
-  router.get('/assets/loader.js', (req, res, next) => {
-    const file = path.join(__dirname, 'assets', 'loader.js');
-    fs.readFile(file, 'utf-8', (err, data) => {
-      const config = {
-        hash : _config.hash,
-        index : req.originalUrl.replace('loader.js', 'index.js')
-      }
-      data = data.replace('MVE_CONFIG', JSON.stringify(config));
-      res.end(data);
-    });
+contentRouter.get('/content/', (req, res, next) => {
+  getContent((err, data) => res.json(data));
+});
+
+contentRouter.post('/files/', fileUpload(), (req, res, next) => {
+  const name = Object.keys(req.files)[0];
+  _storage.upload(req.files[name], name, (err, path)=>{
+    res.end(path);
   });
+});
 
-  router.get('/assets/index.js', (req, res, next) => {
-    res.sendFile(path.join(__dirname, 'assets', 'index.js'));
+assetsRouter.use('/files/:filename', (req, res, next) => {
+  res.sendFile(_config.filesPath + '/' + req.params.filename);
+});
+
+assetsRouter.get('/assets/loader.js', (req, res, next) => {
+  const config = {
+    hash : _config.hash,
+    index : req.originalUrl.replace('loader.js', 'index.js')
+  }
+  _serveAsset('loader.js', config, (err, data) => res.end(data));
+});
+
+assetsRouter.get('/assets/index.js', (req, res, next) => {
+  const config = {
+    editorUrl : _config.editorUrl
+  }
+  _serveAsset('index.js', config, (err, data) => res.end(data));
+});
+
+function _serveAsset(filename, config, callback){
+  const file = path.join(__dirname, 'assets', filename);
+  fs.readFile(file, 'utf-8', (err, data) => {
+    data = data.replace('MVE_CONFIG', JSON.stringify(config));
+    callback(err, data);
   });
-
-  return router;
 }
-
 
 
 module.exports = {
   init,
   getContent,
   addContent,
-  routes
+  contentRouter,
+  assetsRouter
 }
