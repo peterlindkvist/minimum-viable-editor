@@ -1,4 +1,4 @@
-# Minimum Viable editor
+# Minimum Viable Editor
 A micro content editing system for the express framework and any frontend.
 
 This content editor uses a js object as data format as most express templating engines.
@@ -65,7 +65,7 @@ The editor doesn't provide any kind of security by it own. But you can add a mid
     app.use('/editor', basicAuth, mve.contentRouter);
 
 
-## Editing of invissible elements
+## Editing of invisible elements
 
 Since its only possible to edit visible elements you have to create a different page and add these
 texts as normal elements. And edit and save them there.
