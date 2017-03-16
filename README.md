@@ -1,13 +1,15 @@
 # Minimum Viable Editor
 A micro content editing system for the express framework and any frontend.
 
-This content editor uses a js object as data format as most express templating engines.
+This content editor uses a js object as data format, the same as most express templating engines.
 
 Adds a nice looking [medium-editor](https://yabwe.github.io/medium-editor/) to every html-tag
 with a data-mve attribute.
 
 To edit a page, add #editor (defined in config) to the url. And then click on the
 text you want to edit. Press ctrl + s or click the floppydisk in the lower right corner to save.
+
+Items in list can be clone, deleted and moved if you add a data-mve-item attribute.
 
 ## Installation
 It will be added to NPM, soon.
@@ -45,7 +47,7 @@ Add an extra data-mve attribute to every tag you want to edit. Use the [lodash](
 
     <div>
       <h3 data-mve="about.header">{{"about.header}}</h3>
-      <img data-mve="about.image" src="about.image.src" />
+      <img data-mve="about.image" src="{{about.image.src}}" />
       {{#each about.sections }}
         <div data-mve="about.@index.text">
           {{{text}}}
