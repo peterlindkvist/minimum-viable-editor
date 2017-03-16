@@ -50,7 +50,7 @@ function addUploadButton(callback){
   return el;
 }
 
-function createItemMenuButton(type, x, y, content){
+function createItemMenuButton(type, x, y, content, index){
   const size = 20;
   const isMenu = type === 'menu';
   const style = {
@@ -64,13 +64,15 @@ function createItemMenuButton(type, x, y, content){
     right : -x + 'px',
     zIndex : 1000,
     textAlign : 'center',
-    display : isMenu ? 'block' : 'none'
+    display : isMenu ? 'block' : 'none',
+    cursor : 'pointer'
   }
   const attributes = {
-    name : type,
-    'class' : '__menuButton'
+    'data-type' : type,
+    'class' : '__menuButton',
+    title  : type
   }
-  const el = createElement('button', style, attributes);
+  const el = createElement('div', style, attributes);
   el.innerHTML = content;
   return el;
 }
@@ -78,9 +80,12 @@ function createItemMenuButton(type, x, y, content){
 function addItemMenu(itemel, callback){
   let open = false;
   const menuButton = createItemMenuButton('menu', 5, 5, '···');
+  const pos = (angle) => [-30 * Math.sin(angle), -30 * Math.cos(angle)];
   const buttons = [
-    createItemMenuButton('clone', -20, -20, '&#9112;'),
-    createItemMenuButton('delete', -0, -20, '&#128465;'),
+    createItemMenuButton('delete', ...pos(0), '&#128465;'),
+    createItemMenuButton('clone', ...pos(Math.PI / 4), '&#9112;'),
+    createItemMenuButton('up', ...pos(2 * Math.PI / 4), '&#8593;'),
+    createItemMenuButton('down', ...pos(3 * Math.PI / 4), '&#8595;'),
   ];
 
   itemel.appendChild(menuButton);
@@ -88,7 +93,7 @@ function addItemMenu(itemel, callback){
   buttons.map((el) => {
     menuButton.appendChild(el);
     el.addEventListener('click', (evt) => {
-      callback(evt.target.getAttribute('name'), itemel);
+      callback(evt.target.getAttribute('data-type'), itemel);
     });
   });
 
@@ -98,7 +103,6 @@ function addItemMenu(itemel, callback){
       el.style.display = open ? 'block' : 'none';
     });
   });
-
 
   return menuButton;
 }

@@ -100,6 +100,8 @@ module.exports = g;
 "use strict";
 
 
+function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
+
 function createElement() {
   var tagName = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 'div';
   var style = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
@@ -156,7 +158,7 @@ function addUploadButton(callback) {
   return el;
 }
 
-function createItemMenuButton(type, x, y, content) {
+function createItemMenuButton(type, x, y, content, index) {
   var size = 20;
   var isMenu = type === 'menu';
   var style = {
@@ -170,13 +172,15 @@ function createItemMenuButton(type, x, y, content) {
     right: -x + 'px',
     zIndex: 1000,
     textAlign: 'center',
-    display: isMenu ? 'block' : 'none'
+    display: isMenu ? 'block' : 'none',
+    cursor: 'pointer'
   };
   var attributes = {
-    name: type,
-    'class': '__menuButton'
+    'data-type': type,
+    'class': '__menuButton',
+    title: type
   };
-  var el = createElement('button', style, attributes);
+  var el = createElement('div', style, attributes);
   el.innerHTML = content;
   return el;
 }
@@ -184,14 +188,17 @@ function createItemMenuButton(type, x, y, content) {
 function addItemMenu(itemel, callback) {
   var open = false;
   var menuButton = createItemMenuButton('menu', 5, 5, '···');
-  var buttons = [createItemMenuButton('clone', -20, -20, '&#9112;'), createItemMenuButton('delete', -0, -20, '&#128465;')];
+  var pos = function pos(angle) {
+    return [-30 * Math.sin(angle), -30 * Math.cos(angle)];
+  };
+  var buttons = [createItemMenuButton.apply(undefined, ['delete'].concat(_toConsumableArray(pos(0)), ['&#128465;'])), createItemMenuButton.apply(undefined, ['clone'].concat(_toConsumableArray(pos(Math.PI / 4)), ['&#9112;'])), createItemMenuButton.apply(undefined, ['up'].concat(_toConsumableArray(pos(2 * Math.PI / 4)), ['&#8593;'])), createItemMenuButton.apply(undefined, ['down'].concat(_toConsumableArray(pos(3 * Math.PI / 4)), ['&#8595;']))];
 
   itemel.appendChild(menuButton);
 
   buttons.map(function (el) {
     menuButton.appendChild(el);
     el.addEventListener('click', function (evt) {
-      callback(evt.target.getAttribute('name'), itemel);
+      callback(evt.target.getAttribute('data-type'), itemel);
     });
   });
 
@@ -10261,16 +10268,21 @@ function saveContent(evt) {
 
 function updateIndexes(listEl, listpath) {
   var children = Array.from(listEl.querySelectorAll('[data-mve-item]'));
+
   children.map(function (el, i) {
     var path = el.getAttribute('data-mve-item');
     var newpath = path.replace(/(.*)\.([0-9]*)/, function (fp, lp, pos) {
       return lp === listpath ? listpath + '.' + i : fp;
     });
     el.setAttribute('data-mve-item', newpath);
+
+    Array.from(el.querySelectorAll('[data-mve]')).map(function (ed, j) {
+      ed.setAttribute('data-mve', ed.getAttribute('data-mve').replace(path, newpath));
+    });
   });
 }
 
-function modifyList(type, el, moveToIndex) {
+function modifyList(type, el) {
   var datapath = el.getAttribute('data-mve-item');
   var listEl = el.parentNode;
 
@@ -10281,19 +10293,13 @@ function modifyList(type, el, moveToIndex) {
 
   var list = _get(_content, listpath);
 
-  //remove editor
-  Object.keys(_editors).filter(function (key) {
-    return key.indexOf(datapath) === 0;
-  }).map(function (key) {
-    _editors[key].destroy();
-  });
-  el.removeChild(el.querySelector('.__menuButton'));
+  remmoveEditorModules(el, datapath);
 
   switch (type) {
     case 'clone':
-      _editors[datapath];
+      list.splice(index, 0, JSON.parse(JSON.stringify(list[index]))); //deep clone
+      _set(_content, listpath, list);
       var clone = el.cloneNode(true);
-      list.splice(index, 0, list[index]);
       listEl.insertBefore(clone, el);
       updateIndexes(listEl, listpath);
       addEditorModules(el, true);
@@ -10301,10 +10307,30 @@ function modifyList(type, el, moveToIndex) {
       break;
     case 'delete':
       list.splice(index, 1);
+      _set(_content, listpath, list);
       listEl.removeChild(el);
       updateIndexes(listEl, listpath);
       break;
+    case 'up':
+    case 'down':
+      var item = list.splice(index, 1)[0];
+      list.splice(type === 'up' ? +index - 1 : +index + 1, 0, item);
+      _set(_content, listpath, list);
+      var toEl = listEl.querySelectorAll('[data-mve-item]')[type === 'up' ? +index - 1 : +index + 2];
+      listEl.insertBefore(el, toEl);
+      updateIndexes(listEl, listpath);
+      addEditorModules(el, true);
+      break;
+    default:
+      updateIndexes(listEl, listpath);
+      addEditorModules(el, true);
   }
+}
+
+function onEditorBlur(evt) {
+  var el = evt.target;
+  var path = el.getAttribute('data-mve');
+  _set(_content, path, el.innerHTML);
 }
 
 function addEditorToElement(el) {
@@ -10322,9 +10348,7 @@ function addEditorToElement(el) {
     default:
       _editors[path] = new MediumEditor(el);
       el.innerHTML = data;
-      el.addEventListener('blur', function (evt) {
-        _set(_content, path, el.innerHTML);
-      });
+      el.addEventListener('blur', onEditorBlur);
       break;
   }
 }
@@ -10335,7 +10359,6 @@ function addItemMenuToElement(el) {
 
 function parseFile(evt) {
   var el = _activeUpload;
-  console.log("parseFile", el, evt.target.files);
   var file = evt.target.files[0];
   var reader = new FileReader();
   reader.onloadend = function () {
@@ -10360,13 +10383,24 @@ function addEditorModules() {
   var editElements = Array.from(rootNode.querySelectorAll('[data-mve]'));
   var listElements = Array.from(rootNode.querySelectorAll('[data-mve-item]'));
 
-  console.log("addEditorModules", rootNode, listElements);
-
   editElements.map(addEditorToElement);
   listElements.map(addItemMenuToElement);
+
   if (addToRoot) {
     addItemMenuToElement(rootNode);
   }
+}
+
+function remmoveEditorModules(rootNode, datapath) {
+  Object.keys(_editors).filter(function (key) {
+    return key.indexOf(datapath) === 0;
+  }).map(function (key) {
+    _editors[key].destroy();
+  });
+  Array.from(rootNode.querySelectorAll('data-mve')).map(function (el) {
+    el.removeEventListener('blur', onEditorBlur);
+  });
+  rootNode.removeChild(rootNode.querySelector('.__menuButton'));
 }
 
 html.addMediumEditorCSS();
