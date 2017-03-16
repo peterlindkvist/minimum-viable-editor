@@ -100,21 +100,42 @@ module.exports = g;
 "use strict";
 
 
+function createElement() {
+  var tagName = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 'div';
+  var style = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+  var attributes = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+
+  var el = document.createElement(tagName);
+  Object.keys(style).map(function (key) {
+    el.style[key] = style[key];
+  });
+  Object.keys(attributes).map(function (key) {
+    el.setAttribute(key, attributes[key]);
+  });
+  return el;
+}
+
 function addMediumEditorCSS() {
   ['medium-editor.min.css', 'themes/default.min.css'].map(function (file) {
-    var el = document.createElement('link');
-    el.setAttribute('rel', 'stylesheet');
-    el.setAttribute('href', '//cdn.jsdelivr.net/medium-editor/5.22.2/css/' + file);
-    el.setAttribute('type', 'text/css');
-    el.setAttribute('charset', 'utf-8');
+    var attributes = {
+      rel: 'stylesheet',
+      href: '//cdn.jsdelivr.net/medium-editor/5.22.2/css/' + file,
+      type: 'text/css',
+      charset: 'utf-8'
+    };
+    var el = createElement('link', {}, attributes);
     document.getElementsByTagName('head')[0].appendChild(el);
   });
 }
 
 function addSaveButton(callback) {
-  var style = 'position:fixed ; bottom :10px ; right : 10px; font-size: 2em';
-  var el = document.createElement('button');
-  el.setAttribute('style', style);
+  var style = {
+    position: 'fixed',
+    bottom: '10px',
+    right: '10px',
+    fontSize: '2em'
+  };
+  var el = createElement('button', style);
   el.innerHTML = '&#128190;';
   document.getElementsByTagName('body')[0].appendChild(el);
   el.addEventListener('click', callback);
@@ -122,19 +143,73 @@ function addSaveButton(callback) {
 }
 
 function addUploadButton(callback) {
-  var el = document.createElement("input");
-  el.setAttribute('type', 'File');
-  el.style.display = 'none';
+  var style = {
+    display: 'none'
+  };
+  var attributes = {
+    type: 'File'
+  };
+  var el = createElement('input', style, attributes);
   document.getElementsByTagName('body')[0].appendChild(el);
   el.addEventListener('change', callback, false);
 
   return el;
 }
 
+function createItemMenuButton(type, x, y, content) {
+  var size = 20;
+  var isMenu = type === 'menu';
+  var style = {
+    backgroundColor: 'gray',
+    boxShadow: '2px 2px 5px darkgray',
+    width: size + 'px',
+    height: size + 'px',
+    borderRadius: size / 2 + 'px',
+    position: 'absolute',
+    bottom: -y + 'px',
+    right: -x + 'px',
+    zIndex: 1000,
+    textAlign: 'center',
+    display: isMenu ? 'block' : 'none'
+  };
+  var attributes = {
+    name: type,
+    'class': '__menuButton'
+  };
+  var el = createElement('button', style, attributes);
+  el.innerHTML = content;
+  return el;
+}
+
+function addItemMenu(itemel, callback) {
+  var open = false;
+  var menuButton = createItemMenuButton('menu', 5, 5, '···');
+  var buttons = [createItemMenuButton('clone', -20, -20, '&#9112;'), createItemMenuButton('delete', -0, -20, '&#128465;')];
+
+  itemel.appendChild(menuButton);
+
+  buttons.map(function (el) {
+    menuButton.appendChild(el);
+    el.addEventListener('click', function (evt) {
+      callback(evt.target.getAttribute('name'), itemel);
+    });
+  });
+
+  menuButton.addEventListener('click', function (evt) {
+    open = !open;
+    buttons.map(function (el) {
+      el.style.display = open ? 'block' : 'none';
+    });
+  });
+
+  return menuButton;
+}
+
 module.exports = {
   addMediumEditorCSS: addMediumEditorCSS,
   addSaveButton: addSaveButton,
-  addUploadButton: addUploadButton
+  addUploadButton: addUploadButton,
+  addItemMenu: addItemMenu
 };
 
 /***/ }),
@@ -10163,6 +10238,8 @@ process.umask = function() { return 0; };
 "use strict";
 
 
+var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
+
 var _get = __webpack_require__(3);
 var _set = __webpack_require__(4);
 var MediumEditor = __webpack_require__(5);
@@ -10172,7 +10249,8 @@ var service = __webpack_require__(2);
 var CONTENT_API = '/editor/content/';
 var _content = void 0,
     _upload = void 0,
-    _activeUpload = void 0;
+    _activeUpload = void 0,
+    _editors = {};
 
 function saveContent(evt) {
   document.activeElement.blur();
@@ -10181,8 +10259,55 @@ function saveContent(evt) {
   });
 }
 
-function updateElement(el) {
-  console.log("el", el.tagName);
+function updateIndexes(listEl, listpath) {
+  var children = Array.from(listEl.querySelectorAll('[data-mve-item]'));
+  children.map(function (el, i) {
+    var path = el.getAttribute('data-mve-item');
+    var newpath = path.replace(/(.*)\.([0-9]*)/, function (fp, lp, pos) {
+      return lp === listpath ? listpath + '.' + i : fp;
+    });
+    el.setAttribute('data-mve-item', newpath);
+  });
+}
+
+function modifyList(type, el, moveToIndex) {
+  var datapath = el.getAttribute('data-mve-item');
+  var listEl = el.parentNode;
+
+  var _datapath$match = datapath.match(/(.*)\.([0-9]*)/),
+      _datapath$match2 = _slicedToArray(_datapath$match, 3),
+      listpath = _datapath$match2[1],
+      index = _datapath$match2[2];
+
+  var list = _get(_content, listpath);
+
+  //remove editor
+  Object.keys(_editors).filter(function (key) {
+    return key.indexOf(datapath) === 0;
+  }).map(function (key) {
+    _editors[key].destroy();
+  });
+  el.removeChild(el.querySelector('.__menuButton'));
+
+  switch (type) {
+    case 'clone':
+      _editors[datapath];
+      var clone = el.cloneNode(true);
+      list.splice(index, 0, list[index]);
+      listEl.insertBefore(clone, el);
+      updateIndexes(listEl, listpath);
+      addEditorModules(el, true);
+      addEditorModules(clone, true);
+      break;
+    case 'delete':
+      list.splice(index, 1);
+      listEl.removeChild(el);
+      updateIndexes(listEl, listpath);
+      break;
+  }
+}
+
+function addEditorToElement(el) {
   var path = el.getAttribute('data-mve');
   var data = _get(_content, path);
   switch (el.tagName) {
@@ -10195,13 +10320,17 @@ function updateElement(el) {
     case 'A':
     //disable click?
     default:
-      var editor = new MediumEditor(el);
+      _editors[path] = new MediumEditor(el);
       el.innerHTML = data;
       el.addEventListener('blur', function (evt) {
         _set(_content, path, el.innerHTML);
       });
       break;
   }
+}
+
+function addItemMenuToElement(el) {
+  html.addItemMenu(el, modifyList);
 }
 
 function parseFile(evt) {
@@ -10224,15 +10353,30 @@ function parseFile(evt) {
   reader.readAsArrayBuffer(file);
 }
 
+function addEditorModules() {
+  var rootNode = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : document;
+  var addToRoot = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
+
+  var editElements = Array.from(rootNode.querySelectorAll('[data-mve]'));
+  var listElements = Array.from(rootNode.querySelectorAll('[data-mve-item]'));
+
+  console.log("addEditorModules", rootNode, listElements);
+
+  editElements.map(addEditorToElement);
+  listElements.map(addItemMenuToElement);
+  if (addToRoot) {
+    addItemMenuToElement(rootNode);
+  }
+}
+
 html.addMediumEditorCSS();
 html.addSaveButton(saveContent);
 _upload = html.addUploadButton(parseFile);
 
 service.load(function (content) {
   _content = content;
-  var elements = Array.from(document.querySelectorAll('[data-mve]'));
 
-  elements.map(updateElement);
+  addEditorModules();
 
   window.addEventListener('keydown', function (evt) {
     if (evt.key === 's' && evt.ctrlKey) {
