@@ -31,12 +31,13 @@ function updateIndexes(listEl, listpath){
 }
 
 function modifyList(type, el){
+  console.log("modifyList", type, el);
   const datapath = el.getAttribute('data-mve-item');
   const listEl = el.parentNode;
   const [,listpath, index] = datapath.match(/(.*)\.([0-9]*)/);
   const list = _get(_content, listpath);
 
-  remmoveEditorModules(el, datapath);
+  removeEditorModules(el, datapath);
 
   switch(type){
     case 'clone':
@@ -131,17 +132,17 @@ function addEditorModules(rootNode = document, addToRoot = false){
   }
 }
 
-function remmoveEditorModules(rootNode, datapath){
+function removeEditorModules(rootNode, datapath){
   Object.keys(_editors).filter((key) => key.indexOf(datapath) === 0).map((key) => {
     _editors[key].destroy();
   });
   Array.from(rootNode.querySelectorAll('data-mve')).map((el) => {
     el.removeEventListener('blur', onEditorBlur);
   });
-  rootNode.removeChild(rootNode.querySelector('.__menuButton'));
+  rootNode.removeChild(rootNode.querySelector('.__menuContainer'));
 }
 
-html.addMediumEditorCSS();
+html.addThirdPartyCSS();
 html.addSaveButton(saveContent);
 _upload = html.addUploadButton(parseFile);
 

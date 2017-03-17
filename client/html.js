@@ -9,11 +9,14 @@ function createElement(tagName = 'div', style = {}, attributes = {}){
   return el;
 }
 
-function addMediumEditorCSS(){
-  ['medium-editor.min.css', 'themes/default.min.css'].map((file) => {
+function addThirdPartyCSS(){
+  [ 'https://fonts.googleapis.com/icon?family=Material+Icons',
+    '//cdn.jsdelivr.net/medium-editor/5.22.2/css/medium-editor.min.css',
+    '//cdn.jsdelivr.net/medium-editor/5.22.2/css/themes/default.min.css'
+  ].map((file) => {
     const attributes = {
       rel: 'stylesheet',
-      href: '//cdn.jsdelivr.net/medium-editor/5.22.2/css/' + file,
+      href: file,
       type: 'text/css',
       charset: 'utf-8',
     }
@@ -51,47 +54,58 @@ function addUploadButton(callback){
 }
 
 function createItemMenuButton(type, x, y, content, index){
-  const size = 20;
+  const size = 30;
   const isMenu = type === 'menu';
   const style = {
-    backgroundColor : 'gray',
+    backgroundColor : 'white',
     boxShadow: '2px 2px 5px darkgray',
     width : size + 'px',
     height : size + 'px',
     borderRadius : size / 2 + 'px',
     position : 'absolute',
-    bottom : -y + 'px',
+    top : y + 'px',
     right : -x + 'px',
     zIndex : 1000,
     textAlign : 'center',
     display : isMenu ? 'block' : 'none',
-    cursor : 'pointer'
+    cursor : 'pointer',
+    paddingTop : '3px',
+    paddingLeft : '2px'
   }
   const attributes = {
     'data-type' : type,
-    'class' : '__menuButton',
+    'class' : 'material-icons',
     title  : type
   }
-  const el = createElement('div', style, attributes);
-  el.innerHTML = content;
+  const el = createElement('i', style, attributes);
+  el.innerText = content;
   return el;
 }
 
 function addItemMenu(itemel, callback){
   let open = false;
-  const menuButton = createItemMenuButton('menu', 5, 5, '···');
-  const pos = (angle) => [-30 * Math.sin(angle), -30 * Math.cos(angle)];
+  const menuContainer = createElement('div', {
+    position : 'absolute',
+    top : itemel.offsetHeight / 2 +'px',
+    right : '5px'
+  }, {
+    'class': '__menuContainer'
+  });
+  const menuButton = createItemMenuButton('menu', 0, 0, 'menu');
+  const angleOffset = Math.PI / 8;
+  const pos = (angle) => [-45  * Math.sin(angle), -45  * Math.cos(angle)];
   const buttons = [
-    createItemMenuButton('delete', ...pos(0), '&#128465;'),
-    createItemMenuButton('clone', ...pos(Math.PI / 4), '&#9112;'),
-    createItemMenuButton('up', ...pos(2 * Math.PI / 4), '&#8593;'),
-    createItemMenuButton('down', ...pos(3 * Math.PI / 4), '&#8595;'),
+    createItemMenuButton('clone', ...pos(0 * Math.PI / 4 + angleOffset), 'content_copy'),
+    createItemMenuButton('up', ...pos(1 * Math.PI / 4 + angleOffset), 'keyboard_arrow_up'),
+    createItemMenuButton('down', ...pos(2 * Math.PI / 4 + angleOffset ), 'keyboard_arrow_down'),
+    createItemMenuButton('delete', ...pos(3 * Math.PI / 4 + angleOffset), 'delete'),
   ];
 
-  itemel.appendChild(menuButton);
+  itemel.appendChild(menuContainer);
+  menuContainer.appendChild(menuButton)
 
   buttons.map((el) => {
-    menuButton.appendChild(el);
+    menuContainer.appendChild(el);
     el.addEventListener('click', (evt) => {
       callback(evt.target.getAttribute('data-type'), itemel);
     });
@@ -102,13 +116,14 @@ function addItemMenu(itemel, callback){
     buttons.map((el) => {
       el.style.display = open ? 'block' : 'none';
     });
+    menuButton.innerText = open ? 'close' : 'menu';
   });
 
   return menuButton;
 }
 
 module.exports = {
-  addMediumEditorCSS,
+  addThirdPartyCSS,
   addSaveButton,
   addUploadButton,
   addItemMenu

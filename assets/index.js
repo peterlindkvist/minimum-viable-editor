@@ -117,11 +117,11 @@ function createElement() {
   return el;
 }
 
-function addMediumEditorCSS() {
-  ['medium-editor.min.css', 'themes/default.min.css'].map(function (file) {
+function addThirdPartyCSS() {
+  ['https://fonts.googleapis.com/icon?family=Material+Icons', '//cdn.jsdelivr.net/medium-editor/5.22.2/css/medium-editor.min.css', '//cdn.jsdelivr.net/medium-editor/5.22.2/css/themes/default.min.css'].map(function (file) {
     var attributes = {
       rel: 'stylesheet',
-      href: '//cdn.jsdelivr.net/medium-editor/5.22.2/css/' + file,
+      href: file,
       type: 'text/css',
       charset: 'utf-8'
     };
@@ -159,44 +159,55 @@ function addUploadButton(callback) {
 }
 
 function createItemMenuButton(type, x, y, content, index) {
-  var size = 20;
+  var size = 30;
   var isMenu = type === 'menu';
   var style = {
-    backgroundColor: 'gray',
+    backgroundColor: 'white',
     boxShadow: '2px 2px 5px darkgray',
     width: size + 'px',
     height: size + 'px',
     borderRadius: size / 2 + 'px',
     position: 'absolute',
-    bottom: -y + 'px',
+    top: y + 'px',
     right: -x + 'px',
     zIndex: 1000,
     textAlign: 'center',
     display: isMenu ? 'block' : 'none',
-    cursor: 'pointer'
+    cursor: 'pointer',
+    paddingTop: '3px',
+    paddingLeft: '2px'
   };
   var attributes = {
     'data-type': type,
-    'class': '__menuButton',
+    'class': 'material-icons',
     title: type
   };
-  var el = createElement('div', style, attributes);
-  el.innerHTML = content;
+  var el = createElement('i', style, attributes);
+  el.innerText = content;
   return el;
 }
 
 function addItemMenu(itemel, callback) {
   var open = false;
-  var menuButton = createItemMenuButton('menu', 5, 5, '···');
+  var menuContainer = createElement('div', {
+    position: 'absolute',
+    top: itemel.offsetHeight / 2 + 'px',
+    right: '5px'
+  }, {
+    'class': '__menuContainer'
+  });
+  var menuButton = createItemMenuButton('menu', 0, 0, 'menu');
+  var angleOffset = Math.PI / 8;
   var pos = function pos(angle) {
-    return [-30 * Math.sin(angle), -30 * Math.cos(angle)];
+    return [-45 * Math.sin(angle), -45 * Math.cos(angle)];
   };
-  var buttons = [createItemMenuButton.apply(undefined, ['delete'].concat(_toConsumableArray(pos(0)), ['&#128465;'])), createItemMenuButton.apply(undefined, ['clone'].concat(_toConsumableArray(pos(Math.PI / 4)), ['&#9112;'])), createItemMenuButton.apply(undefined, ['up'].concat(_toConsumableArray(pos(2 * Math.PI / 4)), ['&#8593;'])), createItemMenuButton.apply(undefined, ['down'].concat(_toConsumableArray(pos(3 * Math.PI / 4)), ['&#8595;']))];
+  var buttons = [createItemMenuButton.apply(undefined, ['clone'].concat(_toConsumableArray(pos(0 * Math.PI / 4 + angleOffset)), ['content_copy'])), createItemMenuButton.apply(undefined, ['up'].concat(_toConsumableArray(pos(1 * Math.PI / 4 + angleOffset)), ['keyboard_arrow_up'])), createItemMenuButton.apply(undefined, ['down'].concat(_toConsumableArray(pos(2 * Math.PI / 4 + angleOffset)), ['keyboard_arrow_down'])), createItemMenuButton.apply(undefined, ['delete'].concat(_toConsumableArray(pos(3 * Math.PI / 4 + angleOffset)), ['delete']))];
 
-  itemel.appendChild(menuButton);
+  itemel.appendChild(menuContainer);
+  menuContainer.appendChild(menuButton);
 
   buttons.map(function (el) {
-    menuButton.appendChild(el);
+    menuContainer.appendChild(el);
     el.addEventListener('click', function (evt) {
       callback(evt.target.getAttribute('data-type'), itemel);
     });
@@ -207,13 +218,15 @@ function addItemMenu(itemel, callback) {
     buttons.map(function (el) {
       el.style.display = open ? 'block' : 'none';
     });
+    console.log('t', menuButton.innerText);
+    menuButton.innerText = open ? 'close' : 'menu';
   });
 
   return menuButton;
 }
 
 module.exports = {
-  addMediumEditorCSS: addMediumEditorCSS,
+  addThirdPartyCSS: addThirdPartyCSS,
   addSaveButton: addSaveButton,
   addUploadButton: addUploadButton,
   addItemMenu: addItemMenu
@@ -10283,6 +10296,7 @@ function updateIndexes(listEl, listpath) {
 }
 
 function modifyList(type, el) {
+  console.log("modifyList", type, el);
   var datapath = el.getAttribute('data-mve-item');
   var listEl = el.parentNode;
 
@@ -10293,7 +10307,7 @@ function modifyList(type, el) {
 
   var list = _get(_content, listpath);
 
-  remmoveEditorModules(el, datapath);
+  removeEditorModules(el, datapath);
 
   switch (type) {
     case 'clone':
@@ -10391,7 +10405,7 @@ function addEditorModules() {
   }
 }
 
-function remmoveEditorModules(rootNode, datapath) {
+function removeEditorModules(rootNode, datapath) {
   Object.keys(_editors).filter(function (key) {
     return key.indexOf(datapath) === 0;
   }).map(function (key) {
@@ -10400,10 +10414,10 @@ function remmoveEditorModules(rootNode, datapath) {
   Array.from(rootNode.querySelectorAll('data-mve')).map(function (el) {
     el.removeEventListener('blur', onEditorBlur);
   });
-  rootNode.removeChild(rootNode.querySelector('.__menuButton'));
+  rootNode.removeChild(rootNode.querySelector('.__menuContainer'));
 }
 
-html.addMediumEditorCSS();
+html.addThirdPartyCSS();
 html.addSaveButton(saveContent);
 _upload = html.addUploadButton(parseFile);
 
