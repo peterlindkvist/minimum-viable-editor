@@ -84,6 +84,8 @@ function createItemMenuButton(type, x, y, content, index){
 
 function addItemMenu(itemel, callback){
   let open = false;
+  itemel.style.position = 'relative';
+
   const menuContainer = createElement('div', {
     position : 'absolute',
     top : itemel.offsetHeight / 2 +'px',
@@ -118,6 +120,9 @@ function addItemMenu(itemel, callback){
     });
     menuButton.innerText = open ? 'close' : 'menu';
   });
+
+  menuContainer.addEventListener('mouseover', (evt) => itemel.style.backgroundColor = 'rgba(255, 0, 0, 0.1)');
+  menuContainer.addEventListener('mouseout', (evt) => itemel.style.backgroundColor = null);
 
   return menuButton;
 }

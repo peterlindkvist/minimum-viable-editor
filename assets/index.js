@@ -189,6 +189,8 @@ function createItemMenuButton(type, x, y, content, index) {
 
 function addItemMenu(itemel, callback) {
   var open = false;
+  itemel.style.position = 'relative';
+
   var menuContainer = createElement('div', {
     position: 'absolute',
     top: itemel.offsetHeight / 2 + 'px',
@@ -219,6 +221,13 @@ function addItemMenu(itemel, callback) {
       el.style.display = open ? 'block' : 'none';
     });
     menuButton.innerText = open ? 'close' : 'menu';
+  });
+
+  menuContainer.addEventListener('mouseover', function (evt) {
+    return itemel.style.backgroundColor = 'rgba(255, 0, 0, 0.1)';
+  });
+  menuContainer.addEventListener('mouseout', function (evt) {
+    return itemel.style.backgroundColor = null;
   });
 
   return menuButton;
@@ -10343,7 +10352,8 @@ function onEditorBlur(evt) {
 }
 
 function addEditorToElement(el) {
-  var data = _get(_content, resolveFullPath(el));
+  var path = resolveFullPath(el);
+  var data = _get(_content, path);
   switch (el.tagName) {
     case 'IMG':
       el.addEventListener('click', function () {
@@ -10359,6 +10369,12 @@ function addEditorToElement(el) {
       el.addEventListener('blur', onEditorBlur);
       break;
   }
+  el.addEventListener('mouseover', function (evt) {
+    return el.style.backgroundColor = 'rgba(255, 0, 0, 0.1)';
+  });
+  el.addEventListener('mouseout', function (evt) {
+    return el.style.backgroundColor = null;
+  });
 }
 
 function addItemMenuToElement(el) {
@@ -10393,10 +10409,10 @@ function addEditorModules() {
 
   editElements.map(addEditorToElement);
   listElements.map(function (listel) {
-    var childs = Array.from(listel.children).filter(function (el) {
+    var kids = Array.from(listel.children).filter(function (el) {
       return !el.classList.contains('__menuContainer');
     });
-    childs.map(addItemMenuToElement);
+    kids.map(addItemMenuToElement);
   });
 
   if (addToRoot) {
@@ -10413,7 +10429,8 @@ function removeEditorModules(rootNode, datapath) {
   Array.from(rootNode.querySelectorAll('[data-mve]')).map(function (el) {
     el.removeEventListener('blur', onEditorBlur);
   });
-  rootNode.removeChild(rootNode.querySelector('.__menuContainer'));
+  rootNode.style.backgroundColor = null;
+  rootNode.removeChild(rootNode.querySelector(':scope > .__menuContainer'));
 }
 
 html.addThirdPartyCSS();

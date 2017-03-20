@@ -72,7 +72,8 @@ function onEditorBlur(evt){
 }
 
 function addEditorToElement(el) {
-  const data = _get(_content, resolveFullPath(el));
+  const path = resolveFullPath(el);
+  const data = _get(_content, path);
   switch(el.tagName){
     case 'IMG':
       el.addEventListener('click', () => {
@@ -88,6 +89,8 @@ function addEditorToElement(el) {
       el.addEventListener('blur', onEditorBlur);
       break;
   }
+  el.addEventListener('mouseover', (evt) => el.style.backgroundColor = 'rgba(255, 0, 0, 0.1)');
+  el.addEventListener('mouseout', (evt) => el.style.backgroundColor = null);
 }
 
 function addItemMenuToElement(el) {
@@ -119,9 +122,9 @@ function addEditorModules(rootNode = document, addToRoot = false){
 
   editElements.map(addEditorToElement);
   listElements.map((listel) => {
-    const childs = Array.from(listel.children).filter((el) => !el.classList.contains('__menuContainer'));
-    childs.map(addItemMenuToElement);
-  })
+    const kids = Array.from(listel.children).filter((el) => !el.classList.contains('__menuContainer'));
+    kids.map(addItemMenuToElement);
+  });
 
   if(addToRoot){
     addItemMenuToElement(rootNode);
@@ -135,7 +138,8 @@ function removeEditorModules(rootNode, datapath){
   Array.from(rootNode.querySelectorAll('[data-mve]')).map((el) => {
     el.removeEventListener('blur', onEditorBlur);
   });
-  rootNode.removeChild(rootNode.querySelector('.__menuContainer'));
+  rootNode.style.backgroundColor= null;
+  rootNode.removeChild(rootNode.querySelector(':scope > .__menuContainer'));
 }
 
 html.addThirdPartyCSS();
