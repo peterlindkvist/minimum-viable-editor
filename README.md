@@ -18,11 +18,11 @@ Add a `data-mve="[path to text in content json]"` attribute and the content beco
 Add a `data-mve-list="[path to list in content json]"` attribute to be able to clone, delete
 and rearrenge items within the list. The path can be relative to a parent list, add `./` in the begining of the path.
 
-  <ul data-mve-list="content.items">
-    {{#each content.items}}
-      <li data-mve="./">{{name}}</li>
-    {{/each}}
-  </ul>
+    <ul data-mve-list="content.items">
+      {{#each content.items}}
+        <li data-mve="./">{{name}}</li>
+      {{/each}}
+    </ul>
 
 The data path for the items will content.items.0, content.items.1.
 
