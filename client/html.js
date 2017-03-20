@@ -68,7 +68,7 @@ function createItemMenuButton(type, x, y, content){
     height : size + 'px',
     borderRadius : size / 2 + 'px',
     position : 'absolute',
-    top : (y - size/2) + 'px',
+    top : y + 'px',
     right : -x + 'px',
     zIndex : type === 'menu' ? 1000 : 1001,
     textAlign : 'center',
@@ -88,13 +88,13 @@ function createItemMenuButton(type, x, y, content){
 }
 
 function addItemMenu(itemel, callback){
-  let open = false;
+  let open = false, size = 30;
   itemel.style.position = 'relative';
 
   const menuContainer = createElement('div', {
     position : 'absolute',
-    top : itemel.offsetHeight / 2 +'px',
-    right : '5px'
+    top : (itemel.offsetHeight / 2 - size / 2) +'px',
+    right : (-size / 2)  + 'px'
   }, {
     'class': '__menuContainer'
   });

@@ -132,7 +132,7 @@ function addEditorModules(rootNode = document, addToRoot = false){
     if(rootNode.hasAttribute('data-mve')){
       addEditorToElement(rootNode);
     }
-    if(rootNode.hasAttribute('data-mve-list')){
+    if(rootNode.parentNode.hasAttribute('data-mve-list')){
       addItemMenuToElement(rootNode);
     }
   }
