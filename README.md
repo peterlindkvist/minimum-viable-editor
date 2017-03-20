@@ -9,7 +9,22 @@ with a data-mve attribute.
 To edit a page, add #editor (defined in config) to the url. And then click on the
 text you want to edit. Press ctrl + s or click the floppydisk in the lower right corner to save.
 
-Items in list can be clone, deleted and moved if you add a data-mve-item attribute.
+## Edit Areas
+
+Add a `data-mve="[path to text in content json]"` attribute and the content becomes editable.
+
+## Lists of Items
+
+Add a `data-mve-list="[path to list in content json]"` attribute to be able to clone, delete
+and rearrenge items within the list. The path can be relative to a parent list, add `./` in the begining of the path.
+
+  <ul data-mve-list="content.items">
+    {{#each content.items}}
+      <li data-mve="./">{{name}}</li>
+    {{/each}}
+  </ul>
+
+The data path for the items will content.items.0, content.items.1.
 
 ## Installation
 It will be added to NPM, soon.
@@ -48,11 +63,13 @@ Add an extra data-mve attribute to every tag you want to edit. Use the [lodash](
     <div>
       <h3 data-mve="about.header">{{"about.header}}</h3>
       <img data-mve="about.image" src="{{about.image.src}}" />
-      {{#each about.sections }}
-        <div data-mve="about.@index.text">
-          {{{text}}}
+      <div data-mve-list="{{about.sections}}"
+        {{#each about.sections }}
+          <div data-mve="./text">
+            {{{text}}}
+          </div>
+        {{/each}}
         </div>
-      {{/each}}
     </div>
 
 

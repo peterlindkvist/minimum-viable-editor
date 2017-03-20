@@ -19,11 +19,11 @@ function resolveFullPath(el){
     return '';
   }
   const parent = el.parentNode;
-  if(el.hasAttribute('data-mve')){
-    return el.getAttribute('data-mve').replace('./', resolveFullPath(parent) + '.');
-  } else if(parent.hasAttribute('data-mve-list')){
+  if(parent.hasAttribute('data-mve-list')){
     const index = Array.from(parent.children).reduce((acc, curr, i, arr) => (curr === el ? i : acc), -1);
     return parent.getAttribute('data-mve-list').replace('./', resolveFullPath(parent) + '.') + '.' + index;
+  } else if(el.hasAttribute('data-mve')){
+    return el.getAttribute('data-mve').replace('./', resolveFullPath(parent) + '.');
   } else {
     return resolveFullPath(parent);
   }
@@ -68,7 +68,9 @@ function modifyList(type, el){
 function onEditorBlur(evt){
   const el = evt.target;
   const path = resolveFullPath(el);
+  removeEditorModules(el, path);
   _set(_content, path, el.innerHTML);
+  addEditorModules(el, true);
 }
 
 function addEditorToElement(el) {
@@ -127,7 +129,12 @@ function addEditorModules(rootNode = document, addToRoot = false){
   });
 
   if(addToRoot){
-    addItemMenuToElement(rootNode);
+    if(rootNode.hasAttribute('data-mve')){
+      addEditorToElement(rootNode);
+    }
+    if(rootNode.hasAttribute('data-mve-list')){
+      addItemMenuToElement(rootNode);
+    }
   }
 }
 
@@ -139,7 +146,10 @@ function removeEditorModules(rootNode, datapath){
     el.removeEventListener('blur', onEditorBlur);
   });
   rootNode.style.backgroundColor= null;
-  rootNode.removeChild(rootNode.querySelector(':scope > .__menuContainer'));
+  const menu = rootNode.querySelector(':scope > .__menuContainer');
+  if(menu){
+    rootNode.removeChild(menu);
+  }
 }
 
 html.addThirdPartyCSS();

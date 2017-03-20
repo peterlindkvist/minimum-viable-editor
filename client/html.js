@@ -57,19 +57,20 @@ function addUploadButton(callback){
   return el;
 }
 
-function createItemMenuButton(type, x, y, content, index){
+function createItemMenuButton(type, x, y, content){
   const size = 30;
   const isMenu = type === 'menu';
   const style = {
     backgroundColor : 'white',
+    color : 'black',
     boxShadow: '2px 2px 5px darkgray',
     width : size + 'px',
     height : size + 'px',
     borderRadius : size / 2 + 'px',
     position : 'absolute',
-    top : y + 'px',
+    top : (y - size/2) + 'px',
     right : -x + 'px',
-    zIndex : 1000,
+    zIndex : type === 'menu' ? 1000 : 1001,
     textAlign : 'center',
     display : isMenu ? 'block' : 'none',
     cursor : 'pointer',

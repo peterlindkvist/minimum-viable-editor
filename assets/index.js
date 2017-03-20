@@ -162,19 +162,20 @@ function addUploadButton(callback) {
   return el;
 }
 
-function createItemMenuButton(type, x, y, content, index) {
+function createItemMenuButton(type, x, y, content) {
   var size = 30;
   var isMenu = type === 'menu';
   var style = {
     backgroundColor: 'white',
+    color: 'black',
     boxShadow: '2px 2px 5px darkgray',
     width: size + 'px',
     height: size + 'px',
     borderRadius: size / 2 + 'px',
     position: 'absolute',
-    top: y + 'px',
+    top: y - size / 2 + 'px',
     right: -x + 'px',
-    zIndex: 1000,
+    zIndex: type === 'menu' ? 1000 : 1001,
     textAlign: 'center',
     display: isMenu ? 'block' : 'none',
     cursor: 'pointer',
@@ -10296,13 +10297,13 @@ function resolveFullPath(el) {
     return '';
   }
   var parent = el.parentNode;
-  if (el.hasAttribute('data-mve')) {
-    return el.getAttribute('data-mve').replace('./', resolveFullPath(parent) + '.');
-  } else if (parent.hasAttribute('data-mve-list')) {
+  if (parent.hasAttribute('data-mve-list')) {
     var index = Array.from(parent.children).reduce(function (acc, curr, i, arr) {
       return curr === el ? i : acc;
     }, -1);
     return parent.getAttribute('data-mve-list').replace('./', resolveFullPath(parent) + '.') + '.' + index;
+  } else if (el.hasAttribute('data-mve')) {
+    return el.getAttribute('data-mve').replace('./', resolveFullPath(parent) + '.');
   } else {
     return resolveFullPath(parent);
   }
@@ -10352,7 +10353,9 @@ function modifyList(type, el) {
 function onEditorBlur(evt) {
   var el = evt.target;
   var path = resolveFullPath(el);
+  removeEditorModules(el, path);
   _set(_content, path, el.innerHTML);
+  addEditorModules(el, true);
 }
 
 function addEditorToElement(el) {
@@ -10420,7 +10423,12 @@ function addEditorModules() {
   });
 
   if (addToRoot) {
-    addItemMenuToElement(rootNode);
+    if (rootNode.hasAttribute('data-mve')) {
+      addEditorToElement(rootNode);
+    }
+    if (rootNode.hasAttribute('data-mve-list')) {
+      addItemMenuToElement(rootNode);
+    }
   }
 }
 
@@ -10434,7 +10442,10 @@ function removeEditorModules(rootNode, datapath) {
     el.removeEventListener('blur', onEditorBlur);
   });
   rootNode.style.backgroundColor = null;
-  rootNode.removeChild(rootNode.querySelector(':scope > .__menuContainer'));
+  var menu = rootNode.querySelector(':scope > .__menuContainer');
+  if (menu) {
+    rootNode.removeChild(menu);
+  }
 }
 
 html.addThirdPartyCSS();
