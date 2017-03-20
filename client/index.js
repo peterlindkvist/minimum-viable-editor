@@ -14,25 +14,23 @@ function saveContent(evt){
   });
 }
 
-function updateIndexes(listEl, listpath){
-  const children = Array.from(listEl.querySelectorAll('[data-mve-item]'));
-
-  children.map((el, i) => {
-    const path = el.getAttribute('data-mve-item')
-    const newpath = path.replace(/(.*)\.([0-9]*)/, (fp, lp, pos) => {
-      return lp === listpath ? listpath + '.' + i : fp;
-    });
-    el.setAttribute('data-mve-item', newpath);
-
-    Array.from(el.querySelectorAll('[data-mve]')).map((ed, j) => {
-      ed.setAttribute('data-mve', ed.getAttribute('data-mve').replace(path, newpath));
-    });
-  });
+function resolveFullPath(el){
+  if(el === document.body){
+    return '';
+  }
+  const parent = el.parentNode;
+  if(el.hasAttribute('data-mve')){
+    return el.getAttribute('data-mve').replace('./', resolveFullPath(parent) + '.');
+  } else if(parent.hasAttribute('data-mve-list')){
+    const index = Array.from(parent.children).reduce((acc, curr, i, arr) => (curr === el ? i : acc), -1);
+    return parent.getAttribute('data-mve-list').replace('./', resolveFullPath(parent) + '.') + '.' + index;
+  } else {
+    return resolveFullPath(parent);
+  }
 }
 
 function modifyList(type, el){
-  console.log("modifyList", type, el);
-  const datapath = el.getAttribute('data-mve-item');
+  const datapath = resolveFullPath(el);
   const listEl = el.parentNode;
   const [,listpath, index] = datapath.match(/(.*)\.([0-9]*)/);
   const list = _get(_content, listpath);
@@ -45,7 +43,6 @@ function modifyList(type, el){
       _set(_content, listpath, list);
       const clone = el.cloneNode(true);
       listEl.insertBefore(clone, el);
-      updateIndexes(listEl, listpath);
       addEditorModules(el, true);
       addEditorModules(clone, true);
       break;
@@ -53,33 +50,29 @@ function modifyList(type, el){
       list.splice(index, 1);
       _set(_content, listpath, list);
       listEl.removeChild(el);
-      updateIndexes(listEl, listpath);
       break;
     case 'up':
     case 'down':
       const item = list.splice(index, 1)[0];
       list.splice(type === 'up' ? +index -1 : +index + 1, 0, item);
       _set(_content, listpath, list);
-      const toEl = listEl.querySelectorAll('[data-mve-item]')[type === 'up' ? +index - 1 : +index + 2];
+      const toEl = listEl.children[type === 'up' ? +index - 1 : +index + 2];
       listEl.insertBefore(el, toEl);
-      updateIndexes(listEl, listpath);
       addEditorModules(el, true);
       break;
     default:
-      updateIndexes(listEl, listpath);
       addEditorModules(el, true);
   }
 }
 
 function onEditorBlur(evt){
   const el = evt.target;
-  const path = el.getAttribute('data-mve');
+  const path = resolveFullPath(el);
   _set(_content, path, el.innerHTML);
 }
 
 function addEditorToElement(el) {
-  const path = el.getAttribute('data-mve');
-  const data = _get(_content, path);
+  const data = _get(_content, resolveFullPath(el));
   switch(el.tagName){
     case 'IMG':
       el.addEventListener('click', () => {
@@ -122,10 +115,13 @@ function parseFile(evt){
 
 function addEditorModules(rootNode = document, addToRoot = false){
   const editElements = Array.from(rootNode.querySelectorAll('[data-mve]'));
-  const listElements = Array.from(rootNode.querySelectorAll('[data-mve-item]'));
+  const listElements = Array.from(rootNode.querySelectorAll('[data-mve-list]'));
 
   editElements.map(addEditorToElement);
-  listElements.map(addItemMenuToElement);
+  listElements.map((listel) => {
+    const childs = Array.from(listel.children).filter((el) => !el.classList.contains('__menuContainer'));
+    childs.map(addItemMenuToElement);
+  })
 
   if(addToRoot){
     addItemMenuToElement(rootNode);
@@ -136,7 +132,7 @@ function removeEditorModules(rootNode, datapath){
   Object.keys(_editors).filter((key) => key.indexOf(datapath) === 0).map((key) => {
     _editors[key].destroy();
   });
-  Array.from(rootNode.querySelectorAll('data-mve')).map((el) => {
+  Array.from(rootNode.querySelectorAll('[data-mve]')).map((el) => {
     el.removeEventListener('blur', onEditorBlur);
   });
   rootNode.removeChild(rootNode.querySelector('.__menuContainer'));

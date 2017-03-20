@@ -218,7 +218,6 @@ function addItemMenu(itemel, callback) {
     buttons.map(function (el) {
       el.style.display = open ? 'block' : 'none';
     });
-    console.log('t', menuButton.innerText);
     menuButton.innerText = open ? 'close' : 'menu';
   });
 
@@ -10279,25 +10278,25 @@ function saveContent(evt) {
   });
 }
 
-function updateIndexes(listEl, listpath) {
-  var children = Array.from(listEl.querySelectorAll('[data-mve-item]'));
-
-  children.map(function (el, i) {
-    var path = el.getAttribute('data-mve-item');
-    var newpath = path.replace(/(.*)\.([0-9]*)/, function (fp, lp, pos) {
-      return lp === listpath ? listpath + '.' + i : fp;
-    });
-    el.setAttribute('data-mve-item', newpath);
-
-    Array.from(el.querySelectorAll('[data-mve]')).map(function (ed, j) {
-      ed.setAttribute('data-mve', ed.getAttribute('data-mve').replace(path, newpath));
-    });
-  });
+function resolveFullPath(el) {
+  if (el === document.body) {
+    return '';
+  }
+  var parent = el.parentNode;
+  if (el.hasAttribute('data-mve')) {
+    return el.getAttribute('data-mve').replace('./', resolveFullPath(parent) + '.');
+  } else if (parent.hasAttribute('data-mve-list')) {
+    var index = Array.from(parent.children).reduce(function (acc, curr, i, arr) {
+      return curr === el ? i : acc;
+    }, -1);
+    return parent.getAttribute('data-mve-list').replace('./', resolveFullPath(parent) + '.') + '.' + index;
+  } else {
+    return resolveFullPath(parent);
+  }
 }
 
 function modifyList(type, el) {
-  console.log("modifyList", type, el);
-  var datapath = el.getAttribute('data-mve-item');
+  var datapath = resolveFullPath(el);
   var listEl = el.parentNode;
 
   var _datapath$match = datapath.match(/(.*)\.([0-9]*)/),
@@ -10315,7 +10314,6 @@ function modifyList(type, el) {
       _set(_content, listpath, list);
       var clone = el.cloneNode(true);
       listEl.insertBefore(clone, el);
-      updateIndexes(listEl, listpath);
       addEditorModules(el, true);
       addEditorModules(clone, true);
       break;
@@ -10323,33 +10321,29 @@ function modifyList(type, el) {
       list.splice(index, 1);
       _set(_content, listpath, list);
       listEl.removeChild(el);
-      updateIndexes(listEl, listpath);
       break;
     case 'up':
     case 'down':
       var item = list.splice(index, 1)[0];
       list.splice(type === 'up' ? +index - 1 : +index + 1, 0, item);
       _set(_content, listpath, list);
-      var toEl = listEl.querySelectorAll('[data-mve-item]')[type === 'up' ? +index - 1 : +index + 2];
+      var toEl = listEl.children[type === 'up' ? +index - 1 : +index + 2];
       listEl.insertBefore(el, toEl);
-      updateIndexes(listEl, listpath);
       addEditorModules(el, true);
       break;
     default:
-      updateIndexes(listEl, listpath);
       addEditorModules(el, true);
   }
 }
 
 function onEditorBlur(evt) {
   var el = evt.target;
-  var path = el.getAttribute('data-mve');
+  var path = resolveFullPath(el);
   _set(_content, path, el.innerHTML);
 }
 
 function addEditorToElement(el) {
-  var path = el.getAttribute('data-mve');
-  var data = _get(_content, path);
+  var data = _get(_content, resolveFullPath(el));
   switch (el.tagName) {
     case 'IMG':
       el.addEventListener('click', function () {
@@ -10395,10 +10389,15 @@ function addEditorModules() {
   var addToRoot = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
 
   var editElements = Array.from(rootNode.querySelectorAll('[data-mve]'));
-  var listElements = Array.from(rootNode.querySelectorAll('[data-mve-item]'));
+  var listElements = Array.from(rootNode.querySelectorAll('[data-mve-list]'));
 
   editElements.map(addEditorToElement);
-  listElements.map(addItemMenuToElement);
+  listElements.map(function (listel) {
+    var childs = Array.from(listel.children).filter(function (el) {
+      return !el.classList.contains('__menuContainer');
+    });
+    childs.map(addItemMenuToElement);
+  });
 
   if (addToRoot) {
     addItemMenuToElement(rootNode);
@@ -10411,7 +10410,7 @@ function removeEditorModules(rootNode, datapath) {
   }).map(function (key) {
     _editors[key].destroy();
   });
-  Array.from(rootNode.querySelectorAll('data-mve')).map(function (el) {
+  Array.from(rootNode.querySelectorAll('[data-mve]')).map(function (el) {
     el.removeEventListener('blur', onEditorBlur);
   });
   rootNode.removeChild(rootNode.querySelector('.__menuContainer'));
