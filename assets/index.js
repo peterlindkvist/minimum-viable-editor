@@ -135,10 +135,14 @@ function addSaveButton(callback) {
     position: 'fixed',
     bottom: '10px',
     right: '10px',
-    fontSize: '2em'
+    fontSize: '2em',
+    cursor: 'pointer'
   };
-  var el = createElement('button', style);
-  el.innerHTML = '&#128190;';
+  var attributes = {
+    'class': 'material-icons'
+  };
+  var el = createElement('i', style, attributes);
+  el.innerHTML = 'save';
   document.getElementsByTagName('body')[0].appendChild(el);
   el.addEventListener('click', callback);
   return el;
