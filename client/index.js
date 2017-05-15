@@ -7,9 +7,6 @@ const service = require('./service');
 const CONTENT_API = '/editor/content/';
 let _content, _upload, _activeUpload, _editors = {};
 
-const qsa = (selector) => Array.from(rootNode.querySelectorAll(selector));
-const qs = (selector) => rootNode.querySelector(selector);
-
 function saveContent(evt){
   document.activeElement.blur();
   service.save(_content, (data) => {
@@ -131,6 +128,8 @@ function parseFile(evt){
 }
 
 function addEditorModules(rootNode = document, addToRoot = false){
+  const qsa = (selector) => Array.from(rootNode.querySelectorAll(selector));
+
   qsa('[data-mve-html]').map((el) => addEditorToElement(el, 'html'));
   qsa('[data-mve-text]').map((el) => addEditorToElement(el, 'text'));
   qsa('[data-mve-image]').map((el) => addEditorToElement(el, 'image'));
@@ -151,6 +150,8 @@ function addEditorModules(rootNode = document, addToRoot = false){
 }
 
 function removeEditorModules(rootNode, datapath){
+  const qsa = (selector) => Array.from(rootNode.querySelectorAll(selector));
+
   Object.keys(_editors).filter((key) => key.indexOf(datapath) === 0).map((key) => {
     _editors[key].destroy();
   });
