@@ -14,23 +14,23 @@ function saveContent(evt){
   });
 }
 
-function resolveFullPath(el){
+function resolveFullPath(el, attribute){
   if(el === document.body){
     return '';
   }
   const parent = el.parentNode;
   if(parent.hasAttribute('data-mve-list')){
     const index = Array.from(parent.children).reduce((acc, curr, i, arr) => (curr === el ? i : acc), -1);
-    return parent.getAttribute('data-mve-list').replace('./', resolveFullPath(parent) + '.') + '.' + index;
-  } else if(el.hasAttribute('data-mve')){
-    return el.getAttribute('data-mve').replace('./', resolveFullPath(parent) + '.');
+    return parent.getAttribute('data-mve-list').replace('./', resolveFullPath(parent, attribute) + '.') + '.' + index;
+  } else if(el.hasAttribute(attribute)){
+    return el.getAttribute(attribute).replace('./', resolveFullPath(parent, attribute) + '.');
   } else {
-    return resolveFullPath(parent);
+    return resolveFullPath(parent, attribute);
   }
 }
 
 function modifyList(type, el){
-  const datapath = resolveFullPath(el);
+  const datapath = resolveFullPath(el, 'data-mve-list');
   const listEl = el.parentNode;
   const [,listpath, index] = datapath.match(/(.*)\.([0-9]*)/);
   const list = _get(_content, listpath);
@@ -67,7 +67,7 @@ function modifyList(type, el){
 
 function onEditorBlur(evt){
   const el = evt.target;
-  const path = resolveFullPath(el);
+  const path = resolveFullPath(el, 'data-mve-html');
   removeEditorModules(el, path);
   _set(_content, path, el.innerHTML);
   addEditorModules(el, true);
@@ -75,12 +75,12 @@ function onEditorBlur(evt){
 
 function onTextBlur(evt){
   const el = evt.target;
-  const path = resolveFullPath(el);
+  const path = resolveFullPath(el, 'data-mve-text');
   _set(_content, path, el.innerHTML);
 }
 
 function addEditorToElement(el, type) {
-  const path = resolveFullPath(el);
+  const path = resolveFullPath(el, 'data-mve-' + type);
   const data = _get(_content, path);
   switch(type){
     case 'image':
@@ -90,7 +90,7 @@ function addEditorToElement(el, type) {
       });
       break;
     case 'text':
-      el.setAttribute('content-editable', true);
+      el.setAttribute('contenteditable', true);
       el.innerHTML = data;
       el.addEventListener('blur', onTextBlur);
       break;
@@ -129,10 +129,11 @@ function parseFile(evt){
 
 function addEditorModules(rootNode = document, addToRoot = false){
   const qsa = (selector) => Array.from(rootNode.querySelectorAll(selector));
+  const types = ['html', 'text', 'image'];
 
-  qsa('[data-mve-html]').map((el) => addEditorToElement(el, 'html'));
-  qsa('[data-mve-text]').map((el) => addEditorToElement(el, 'text'));
-  qsa('[data-mve-image]').map((el) => addEditorToElement(el, 'image'));
+  types.map((type) => {
+    qsa('[data-mve-' + type + ']').map((el) => addEditorToElement(el,type));
+  })
 
   qsa('[data-mve-list]').map((listel) => {
     const kids = Array.from(listel.children).filter((el) => !el.classList.contains('__menuContainer'));
@@ -140,9 +141,11 @@ function addEditorModules(rootNode = document, addToRoot = false){
   });
 
   if(addToRoot){
-    if(rootNode.hasAttribute('data-mve')){
-      addEditorToElement(rootNode);
-    }
+    types.map((type) => {
+      if(rootNode.hasAttribute('data-mve-' + type)){
+        addEditorToElement(rootNode, type);
+      }
+    });
     if(rootNode.parentNode.hasAttribute('data-mve-list')){
       addItemMenuToElement(rootNode);
     }
