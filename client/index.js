@@ -7,6 +7,9 @@ const service = require('./service');
 const CONTENT_API = '/editor/content/';
 let _content, _upload, _activeUpload, _editors = {};
 
+const qsa = (selector) => Array.from(rootNode.querySelectorAll(selector));
+const qs = (selector) => rootNode.querySelector(selector);
+
 function saveContent(evt){
   document.activeElement.blur();
   service.save(_content, (data) => {
@@ -73,19 +76,28 @@ function onEditorBlur(evt){
   addEditorModules(el, true);
 }
 
-function addEditorToElement(el) {
+function onTextBlur(evt){
+  const el = evt.target;
+  const path = resolveFullPath(el);
+  _set(_content, path, el.innerHTML);
+}
+
+function addEditorToElement(el, type) {
   const path = resolveFullPath(el);
   const data = _get(_content, path);
-  switch(el.tagName){
-    case 'IMG':
+  switch(type){
+    case 'image':
       el.addEventListener('click', () => {
         _activeUpload = el;
         _upload.click();
       });
       break;
-    case 'A':
-    //disable click?
-    default :
+    case 'text':
+      el.setAttribute('content-editable', true);
+      el.innerHTML = data;
+      el.addEventListener('blur', onTextBlur);
+      break;
+    case 'html':
       _editors[path] = new MediumEditor(el);
       el.innerHTML = data;
       el.addEventListener('blur', onEditorBlur);
@@ -119,11 +131,11 @@ function parseFile(evt){
 }
 
 function addEditorModules(rootNode = document, addToRoot = false){
-  const editElements = Array.from(rootNode.querySelectorAll('[data-mve]'));
-  const listElements = Array.from(rootNode.querySelectorAll('[data-mve-list]'));
+  qsa('[data-mve-html]').map((el) => addEditorToElement(el, 'html'));
+  qsa('[data-mve-text]').map((el) => addEditorToElement(el, 'text'));
+  qsa('[data-mve-image]').map((el) => addEditorToElement(el, 'image'));
 
-  editElements.map(addEditorToElement);
-  listElements.map((listel) => {
+  qsa('[data-mve-list]').map((listel) => {
     const kids = Array.from(listel.children).filter((el) => !el.classList.contains('__menuContainer'));
     kids.map(addItemMenuToElement);
   });
@@ -142,7 +154,7 @@ function removeEditorModules(rootNode, datapath){
   Object.keys(_editors).filter((key) => key.indexOf(datapath) === 0).map((key) => {
     _editors[key].destroy();
   });
-  Array.from(rootNode.querySelectorAll('[data-mve]')).map((el) => {
+  qsa('[data-mve]').map((el) => {
     el.removeEventListener('blur', onEditorBlur);
   });
   rootNode.style.backgroundColor= null;

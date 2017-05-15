@@ -20,14 +20,18 @@ and rearrenge items within the list. The path can be relative to a parent list, 
 
     <ul data-mve-list="content.items">
       {{#each content.items}}
-        <li data-mve="./">{{name}}</li>
+        <li data-mve-html="./">{{name}}</li>
       {{/each}}
     </ul>
 
 The data path for the items will content.items.0, content.items.1.
 
 ## Installation
-It will be added to NPM, soon.
+It will be added to NPM, as soon its stable.
+
+    npm install peterlindkvist/minimum-viable-editor --save
+
+or
 
 Fetch the repo and run `npm install && npm link`
 then in your project run `npm link minimal-viable-editor`
@@ -61,15 +65,15 @@ Add an extra data-mve attribute to every tag you want to edit. Use the [lodash](
 (here with handlebars as templating engine)
 
     <div>
-      <h3 data-mve="about.header">{{"about.header}}</h3>
-      <img data-mve="about.image" src="{{about.image.src}}" />
+      <h3 data-mve-text="about.header">{{"about.header}}</h3>
+      <img data-mve-image="about.image" src="{{about.image.src}}" />
       <div data-mve-list="{{about.sections}}"
         {{#each about.sections }}
-          <div data-mve="./text">
+          <div data-mve-html="./text">
             {{{text}}}
           </div>
         {{/each}}
-        </div>
+      </div>
     </div>
 
 
