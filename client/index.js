@@ -161,6 +161,8 @@ service.load((content) => {
 
   addEditorModules();
 
+  document.querySelector('body').classList.add('mve-editing');
+
   window.addEventListener('keydown', (evt) => {
     if(evt.key === 's' && evt.ctrlKey){
       evt.preventDefault();
