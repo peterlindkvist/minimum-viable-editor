@@ -9,7 +9,7 @@ with a data-mve-html attribute.
 To edit a page, add #editor (defined in config) to the url. And then click on the
 text you want to edit. Press ctrl + s or click the floppydisk in the lower right corner to save.
 
-## Editir Attributes
+## Editor Attributes
 
 ### data-mve-text
 
@@ -30,7 +30,7 @@ and rearrenge items within the list. The path can be relative to a parent list, 
       {{/each}}
     </ul>
 
-The data path for the items will content.items.0, content.items.1.
+The data path for the items become content.items.0, content.items.1.
 
 ### data-mve-with
 
@@ -105,8 +105,10 @@ The editor doesn't provide any kind of security by it own. But you can add a mid
 ## Editing of invisible elements
 
 Since its only possible to edit visible elements you have to create a different page and add these
-texts as normal elements. Add
+texts as normal elements. To fetch the editor directly instead of adding #editor, use the index.js.
 
     <script type="text/javascript" src="/editor/assets/index.js"></script>
 
-Instead to load the editor directly without the #
+## Tests
+
+soon :(
