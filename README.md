@@ -41,6 +41,9 @@ Changes the scope for the data-mve-* tags below. Makes refactoring and texts in 
     </section>
 
 ## Installation
+
+### Install package
+
 It will be added to NPM, as soon its stable.
 
     npm install peterlindkvist/minimum-viable-editor --save
@@ -50,7 +53,24 @@ or
 Fetch the repo and run `npm install && npm link`
 then in your project run `npm link minimal-viable-editor`
 
+### Simple setup
+
 In your node app:
+
+    const mve = require('minimum-viable-editor');
+
+    router.use(mve.simpleSetup({
+      dataPath : path.join(__dirname, 'data');    // folder for content json and uploaded files.
+      users : ['user:123']                        //users to be able to edit the content in the form username:password
+    }));
+
+See advanced setup for more config parameters.
+
+Add a json file in the dataPath folder with your content data. And add the folder assets upload.
+
+### Advanced setup
+
+To be able to controll more of the routing the internal routing can be used instead.
 
     const mve = require('minimum-viable-editor');
 
@@ -68,7 +88,9 @@ In your node app:
     app.use('/editor', mve.assetsRouter); // add the public assets router
     app.use('/editor', basicAuth, mve.contentRouter); // add the private content router (behind some kind of authentification)
 
-Add a json file in the filePath folder with your content data. And add the folder assets upload.
+
+
+### HTML
 
 And in the html add :
 
@@ -93,7 +115,7 @@ Add an extra data-mve attribute to every tag you want to edit. Use the [lodash](
 
 ## Security
 
-The editor doesn't provide any kind of security by it own. But you can add a middleware in front of the contentRouter.
+The editor doesn't provide any kind of security except the basic auth. But you can add a middleware in front of the contentRouter.
 
     const auth = require('http-auth');
     const basicAuth = auth.connect(auth.basic({ realm: "Content Editor" }, (username, password, callback) => {

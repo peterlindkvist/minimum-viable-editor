@@ -3,9 +3,12 @@ const bodyParser = require('body-parser');
 const fileUpload = require('express-fileupload');
 const path = require('path');
 const fs = require('fs');
+const auth = require('http-auth');
 
 const contentRouter = express.Router();
 const assetsRouter = express.Router();
+
+
 let _config, _storage;
 
 function init(config){
@@ -17,6 +20,7 @@ function init(config){
   }
   _storage.init(config);
 }
+
 
 function addContent(req, res, next){
   getContent((err, data) => {
@@ -73,11 +77,42 @@ function _serveAsset(filename, config, callback){
   });
 }
 
+function basicAuth(){
+  return auth.connect(auth.basic({ realm: "Content Editor" }, (username, password, callback) => {
+    callback(_config.users.indexOf(username + ':'+ password) !== -1);
+  }));
+}
+
+function simpleSetup(config){
+  const dataPath = config.dataPath || path.join(__dirname, '..', 'data');
+
+  const conf = Object.assign({}, {
+    storage : 'file',
+    contentPath : path.join(dataPath, 'editor.json'),
+    filesPath :  path.join(dataPath, 'files'),
+    editorUrl : '/mve',
+    hash : 'editor',
+    users : []
+  }, config);
+
+  console.log("conf", conf);
+  init(conf);
+
+  const router = express.Router();
+
+  router.use(conf.editorUrl, assetsRouter); // add the public assets router
+  router.use(conf.editorUrl, basicAuth(), contentRouter); // add the private content router (behind some kind of authentification)
+  router.use(addContent);
+  return router;
+}
+
 
 module.exports = {
   init,
   getContent,
   addContent,
   contentRouter,
-  assetsRouter
+  assetsRouter,
+  simpleSetup,
+  basicAuth
 }
