@@ -63,11 +63,241 @@
 /******/ 	__webpack_require__.p = "";
 
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 7);
+/******/ 	return __webpack_require__(__webpack_require__.s = 0);
 /******/ })
 /************************************************************************/
 /******/ ([
 /* 0 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
+
+var _get = __webpack_require__(5);
+var _set = __webpack_require__(6);
+var MediumEditor = __webpack_require__(7);
+var html = __webpack_require__(3);
+var service = __webpack_require__(4);
+
+var CONTENT_API = '/editor/content/';
+var _content = void 0,
+    _upload = void 0,
+    _activeUpload = void 0,
+    _editors = {};
+
+function saveContent(evt) {
+  document.activeElement.blur();
+  service.save(_content, function (data) {
+    console.log("saved");
+  });
+}
+
+function resolveFullPath(el, attribute) {
+  if (el === document.body) {
+    return '';
+  }
+
+  //sconsole.log("hasAttribute parent", el, attribute);
+  var parent = el.parentNode;
+  if (parent.hasAttribute('data-mve-list')) {
+    var index = Array.from(parent.children).reduce(function (acc, curr, i, arr) {
+      return curr === el ? i : acc;
+    }, -1);
+    return parent.getAttribute('data-mve-list').replace('./', resolveFullPath(parent, attribute) + '.') + '.' + index;
+  } else if (el.hasAttribute('data-mve-with')) {
+    return el.getAttribute('data-mve-with').replace('./', resolveFullPath(parent, attribute) + '.');
+  } else if (el.hasAttribute(attribute)) {
+    return el.getAttribute(attribute).replace('./', resolveFullPath(parent, attribute) + '.');
+  } else {
+
+    return resolveFullPath(parent, attribute);
+  }
+}
+
+function modifyList(type, el) {
+  var datapath = resolveFullPath(el, 'data-mve-list');
+  var listEl = el.parentNode;
+
+  var _datapath$match = datapath.match(/(.*)\.([0-9]*)/),
+      _datapath$match2 = _slicedToArray(_datapath$match, 3),
+      listpath = _datapath$match2[1],
+      index = _datapath$match2[2];
+
+  var list = _get(_content, listpath);
+
+  removeEditorModules(el, datapath);
+
+  switch (type) {
+    case 'clone':
+      list.splice(index, 0, JSON.parse(JSON.stringify(list[index]))); //deep clone
+      _set(_content, listpath, list);
+      var clone = el.cloneNode(true);
+      listEl.insertBefore(clone, el);
+      addEditorModules(el, true);
+      addEditorModules(clone, true);
+      break;
+    case 'delete':
+      list.splice(index, 1);
+      _set(_content, listpath, list);
+      listEl.removeChild(el);
+      break;
+    case 'up':
+    case 'down':
+      var item = list.splice(index, 1)[0];
+      list.splice(type === 'up' ? +index - 1 : +index + 1, 0, item);
+      _set(_content, listpath, list);
+      var toEl = listEl.children[type === 'up' ? +index - 1 : +index + 2];
+      listEl.insertBefore(el, toEl);
+      addEditorModules(el, true);
+      break;
+    default:
+      addEditorModules(el, true);
+  }
+}
+
+function onEditorBlur(evt) {
+  var el = evt.target;
+  var path = resolveFullPath(el, 'data-mve-html');
+  removeEditorModules(el, path);
+  _set(_content, path, el.innerHTML);
+  addEditorModules(el, true);
+}
+
+function onTextBlur(evt) {
+  var el = evt.target;
+  var path = resolveFullPath(el, 'data-mve-text');
+  console.log("blur", path);
+  _set(_content, path, el.innerHTML);
+}
+
+function addEditorToElement(el, type) {
+  var path = resolveFullPath(el, 'data-mve-' + type);
+  var data = _get(_content, path);
+  switch (type) {
+    case 'image':
+      el.addEventListener('click', function () {
+        _activeUpload = el;
+        _upload.click();
+      });
+      break;
+    case 'text':
+      el.setAttribute('contenteditable', true);
+      el.innerHTML = data;
+      el.addEventListener('blur', onTextBlur);
+      break;
+    case 'html':
+      _editors[path] = new MediumEditor(el);
+      el.innerHTML = data;
+      el.addEventListener('blur', onEditorBlur);
+      break;
+  }
+  el.addEventListener('mouseover', function (evt) {
+    return el.style.backgroundColor = 'rgba(255, 0, 0, 0.1)';
+  });
+  el.addEventListener('mouseout', function (evt) {
+    return el.style.backgroundColor = null;
+  });
+}
+
+function addItemMenuToElement(el) {
+  html.addItemMenu(el, modifyList);
+}
+
+function parseFile(evt) {
+  var el = _activeUpload;
+  var file = evt.target.files[0];
+  var reader = new FileReader();
+  reader.onloadend = function () {
+
+    var blob = new Blob([reader.result], { type: file.type });
+
+    service.uploadFile(blob, file.name, function (filepath) {
+      _set(_content, el.getAttribute('data-mve'), {
+        src: filepath
+      });
+      el.setAttribute('src', filepath);
+    });
+  };
+
+  reader.readAsArrayBuffer(file);
+}
+
+function addEditorModules() {
+  var rootNode = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : document;
+  var addToRoot = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
+
+  var qsa = function qsa(selector) {
+    return Array.from(rootNode.querySelectorAll(selector));
+  };
+  var types = ['html', 'text', 'image'];
+
+  types.map(function (type) {
+    qsa('[data-mve-' + type + ']').map(function (el) {
+      return addEditorToElement(el, type);
+    });
+  });
+
+  qsa('[data-mve-list]').map(function (listel) {
+    var kids = Array.from(listel.children).filter(function (el) {
+      return !el.classList.contains('__menuContainer');
+    });
+    kids.map(addItemMenuToElement);
+  });
+
+  if (addToRoot) {
+    types.map(function (type) {
+      if (rootNode.hasAttribute('data-mve-' + type)) {
+        addEditorToElement(rootNode, type);
+      }
+    });
+    if (rootNode.parentNode.hasAttribute('data-mve-list')) {
+      addItemMenuToElement(rootNode);
+    }
+  }
+}
+
+function removeEditorModules(rootNode, datapath) {
+  var qsa = function qsa(selector) {
+    return Array.from(rootNode.querySelectorAll(selector));
+  };
+
+  Object.keys(_editors).filter(function (key) {
+    return key.indexOf(datapath) === 0;
+  }).map(function (key) {
+    _editors[key].destroy();
+  });
+  qsa('[data-mve]').map(function (el) {
+    el.removeEventListener('blur', onEditorBlur);
+  });
+  rootNode.style.backgroundColor = null;
+  var menu = rootNode.querySelector(':scope > .__menuContainer');
+  if (menu) {
+    rootNode.removeChild(menu);
+  }
+}
+
+html.addThirdPartyCSS();
+html.addSaveButton(saveContent);
+_upload = html.addUploadButton(parseFile);
+
+service.load(function (content) {
+  _content = content;
+
+  addEditorModules();
+
+  window.addEventListener('keydown', function (evt) {
+    if (evt.key === 's' && evt.ctrlKey) {
+      evt.preventDefault();
+      saveContent();
+    }
+  });
+});
+
+/***/ }),
+/* 1 */,
+/* 2 */
 /***/ (function(module, exports) {
 
 var g;
@@ -94,7 +324,7 @@ module.exports = g;
 
 
 /***/ }),
-/* 1 */
+/* 3 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -131,12 +361,21 @@ function addThirdPartyCSS() {
 }
 
 function addSaveButton(callback) {
+  var size = 50;
   var style = {
     position: 'fixed',
-    bottom: '10px',
-    right: '10px',
+    width: size + 'px',
+    height: size + 'px',
+    bottom: '15px',
+    right: '15px',
     fontSize: '2em',
-    cursor: 'pointer'
+    cursor: 'pointer',
+    boxShadow: '2px 2px 5px darkgray',
+    borderRadius: size / 2 + 'px',
+    textAlign: 'center',
+    paddingTop: '9px',
+    paddingLeft: '2px'
+
   };
   var attributes = {
     'class': 'material-icons'
@@ -247,7 +486,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 2 */
+/* 4 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -299,7 +538,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 3 */
+/* 5 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global) {/**
@@ -1234,10 +1473,10 @@ function get(object, path, defaultValue) {
 
 module.exports = get;
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(2)))
 
 /***/ }),
-/* 4 */
+/* 6 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global) {/**
@@ -2231,10 +2470,10 @@ function set(object, path, value) {
 
 module.exports = set;
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(2)))
 
 /***/ }),
-/* 5 */
+/* 7 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(process) {var __WEBPACK_AMD_DEFINE_RESULT__;/*global self, document, DOMException */
@@ -10077,10 +10316,10 @@ MediumEditor.version = MediumEditor.parseVersionString.call(this, ({
     return MediumEditor;
 }()));
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(6)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(8)))
 
 /***/ }),
-/* 6 */
+/* 8 */
 /***/ (function(module, exports) {
 
 // shim for using process in browser
@@ -10264,207 +10503,6 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-
-/***/ }),
-/* 7 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
-
-var _get = __webpack_require__(3);
-var _set = __webpack_require__(4);
-var MediumEditor = __webpack_require__(5);
-var html = __webpack_require__(1);
-var service = __webpack_require__(2);
-
-var CONTENT_API = '/editor/content/';
-var _content = void 0,
-    _upload = void 0,
-    _activeUpload = void 0,
-    _editors = {};
-
-function saveContent(evt) {
-  document.activeElement.blur();
-  service.save(_content, function (data) {
-    console.log("saved");
-  });
-}
-
-function resolveFullPath(el) {
-  if (el === document.body) {
-    return '';
-  }
-  var parent = el.parentNode;
-  if (parent.hasAttribute('data-mve-list')) {
-    var index = Array.from(parent.children).reduce(function (acc, curr, i, arr) {
-      return curr === el ? i : acc;
-    }, -1);
-    return parent.getAttribute('data-mve-list').replace('./', resolveFullPath(parent) + '.') + '.' + index;
-  } else if (el.hasAttribute('data-mve')) {
-    return el.getAttribute('data-mve').replace('./', resolveFullPath(parent) + '.');
-  } else {
-    return resolveFullPath(parent);
-  }
-}
-
-function modifyList(type, el) {
-  var datapath = resolveFullPath(el);
-  var listEl = el.parentNode;
-
-  var _datapath$match = datapath.match(/(.*)\.([0-9]*)/),
-      _datapath$match2 = _slicedToArray(_datapath$match, 3),
-      listpath = _datapath$match2[1],
-      index = _datapath$match2[2];
-
-  var list = _get(_content, listpath);
-
-  removeEditorModules(el, datapath);
-
-  switch (type) {
-    case 'clone':
-      list.splice(index, 0, JSON.parse(JSON.stringify(list[index]))); //deep clone
-      _set(_content, listpath, list);
-      var clone = el.cloneNode(true);
-      listEl.insertBefore(clone, el);
-      addEditorModules(el, true);
-      addEditorModules(clone, true);
-      break;
-    case 'delete':
-      list.splice(index, 1);
-      _set(_content, listpath, list);
-      listEl.removeChild(el);
-      break;
-    case 'up':
-    case 'down':
-      var item = list.splice(index, 1)[0];
-      list.splice(type === 'up' ? +index - 1 : +index + 1, 0, item);
-      _set(_content, listpath, list);
-      var toEl = listEl.children[type === 'up' ? +index - 1 : +index + 2];
-      listEl.insertBefore(el, toEl);
-      addEditorModules(el, true);
-      break;
-    default:
-      addEditorModules(el, true);
-  }
-}
-
-function onEditorBlur(evt) {
-  var el = evt.target;
-  var path = resolveFullPath(el);
-  removeEditorModules(el, path);
-  _set(_content, path, el.innerHTML);
-  addEditorModules(el, true);
-}
-
-function addEditorToElement(el) {
-  var path = resolveFullPath(el);
-  var data = _get(_content, path);
-  switch (el.tagName) {
-    case 'IMG':
-      el.addEventListener('click', function () {
-        _activeUpload = el;
-        _upload.click();
-      });
-      break;
-    case 'A':
-    //disable click?
-    default:
-      _editors[path] = new MediumEditor(el);
-      el.innerHTML = data;
-      el.addEventListener('blur', onEditorBlur);
-      break;
-  }
-  el.addEventListener('mouseover', function (evt) {
-    return el.style.backgroundColor = 'rgba(255, 0, 0, 0.1)';
-  });
-  el.addEventListener('mouseout', function (evt) {
-    return el.style.backgroundColor = null;
-  });
-}
-
-function addItemMenuToElement(el) {
-  html.addItemMenu(el, modifyList);
-}
-
-function parseFile(evt) {
-  var el = _activeUpload;
-  var file = evt.target.files[0];
-  var reader = new FileReader();
-  reader.onloadend = function () {
-
-    var blob = new Blob([reader.result], { type: file.type });
-
-    service.uploadFile(blob, file.name, function (filepath) {
-      _set(_content, el.getAttribute('data-mve'), {
-        src: filepath
-      });
-      el.setAttribute('src', filepath);
-    });
-  };
-
-  reader.readAsArrayBuffer(file);
-}
-
-function addEditorModules() {
-  var rootNode = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : document;
-  var addToRoot = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
-
-  var editElements = Array.from(rootNode.querySelectorAll('[data-mve]'));
-  var listElements = Array.from(rootNode.querySelectorAll('[data-mve-list]'));
-
-  editElements.map(addEditorToElement);
-  listElements.map(function (listel) {
-    var kids = Array.from(listel.children).filter(function (el) {
-      return !el.classList.contains('__menuContainer');
-    });
-    kids.map(addItemMenuToElement);
-  });
-
-  if (addToRoot) {
-    if (rootNode.hasAttribute('data-mve')) {
-      addEditorToElement(rootNode);
-    }
-    if (rootNode.parentNode.hasAttribute('data-mve-list')) {
-      addItemMenuToElement(rootNode);
-    }
-  }
-}
-
-function removeEditorModules(rootNode, datapath) {
-  Object.keys(_editors).filter(function (key) {
-    return key.indexOf(datapath) === 0;
-  }).map(function (key) {
-    _editors[key].destroy();
-  });
-  Array.from(rootNode.querySelectorAll('[data-mve]')).map(function (el) {
-    el.removeEventListener('blur', onEditorBlur);
-  });
-  rootNode.style.backgroundColor = null;
-  var menu = rootNode.querySelector(':scope > .__menuContainer');
-  if (menu) {
-    rootNode.removeChild(menu);
-  }
-}
-
-html.addThirdPartyCSS();
-html.addSaveButton(saveContent);
-_upload = html.addUploadButton(parseFile);
-
-service.load(function (content) {
-  _content = content;
-
-  addEditorModules();
-
-  window.addEventListener('keydown', function (evt) {
-    if (evt.key === 's' && evt.ctrlKey) {
-      evt.preventDefault();
-      saveContent();
-    }
-  });
-});
 
 /***/ })
 /******/ ]);

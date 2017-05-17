@@ -41,13 +41,13 @@ contentRouter.get('/content/', (req, res, next) => {
 
 contentRouter.post('/files/', fileUpload(), (req, res, next) => {
   const name = Object.keys(req.files)[0];
-  _storage.upload(req.files[name], name, (err, path)=>{
+  _storage.upload(req.files[name], name, (err, path) => {
     res.end(path);
   });
 });
 
 assetsRouter.use('/files/:filename', (req, res, next) => {
-  res.sendFile(_config.filesPath + '/' + req.params.filename);
+  res.sendFile(path.join(_config.filesPath,req.params.filename));
 });
 
 assetsRouter.get('/assets/loader.js', (req, res, next) => {

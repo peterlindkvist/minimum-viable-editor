@@ -14,23 +14,28 @@ function saveContent(evt){
   });
 }
 
-function resolveFullPath(el){
+function resolveFullPath(el, attribute){
   if(el === document.body){
     return '';
   }
+
+  //sconsole.log("hasAttribute parent", el, attribute);
   const parent = el.parentNode;
   if(parent.hasAttribute('data-mve-list')){
     const index = Array.from(parent.children).reduce((acc, curr, i, arr) => (curr === el ? i : acc), -1);
-    return parent.getAttribute('data-mve-list').replace('./', resolveFullPath(parent) + '.') + '.' + index;
-  } else if(el.hasAttribute('data-mve')){
-    return el.getAttribute('data-mve').replace('./', resolveFullPath(parent) + '.');
+    return parent.getAttribute('data-mve-list').replace('./', resolveFullPath(parent, attribute) + '.') + '.' + index;
+  } else if(el.hasAttribute('data-mve-with')){
+    return el.getAttribute('data-mve-with').replace('./', resolveFullPath(parent, attribute) + '.') ;
+  } else if(el.hasAttribute(attribute)){
+    return el.getAttribute(attribute).replace('./', resolveFullPath(parent, attribute) + '.');
   } else {
-    return resolveFullPath(parent);
+
+    return resolveFullPath(parent, attribute);
   }
 }
 
 function modifyList(type, el){
-  const datapath = resolveFullPath(el);
+  const datapath = resolveFullPath(el, 'data-mve-list');
   const listEl = el.parentNode;
   const [,listpath, index] = datapath.match(/(.*)\.([0-9]*)/);
   const list = _get(_content, listpath);
@@ -67,25 +72,35 @@ function modifyList(type, el){
 
 function onEditorBlur(evt){
   const el = evt.target;
-  const path = resolveFullPath(el);
+  const path = resolveFullPath(el, 'data-mve-html');
   removeEditorModules(el, path);
   _set(_content, path, el.innerHTML);
   addEditorModules(el, true);
 }
 
-function addEditorToElement(el) {
-  const path = resolveFullPath(el);
+function onTextBlur(evt){
+  const el = evt.target;
+  const path = resolveFullPath(el, 'data-mve-text');
+  console.log("blur", path);
+  _set(_content, path, el.innerHTML);
+}
+
+function addEditorToElement(el, type) {
+  const path = resolveFullPath(el, 'data-mve-' + type);
   const data = _get(_content, path);
-  switch(el.tagName){
-    case 'IMG':
+  switch(type){
+    case 'image':
       el.addEventListener('click', () => {
         _activeUpload = el;
         _upload.click();
       });
       break;
-    case 'A':
-    //disable click?
-    default :
+    case 'text':
+      el.setAttribute('contenteditable', true);
+      el.innerHTML = data;
+      el.addEventListener('blur', onTextBlur);
+      break;
+    case 'html':
       _editors[path] = new MediumEditor(el);
       el.innerHTML = data;
       el.addEventListener('blur', onEditorBlur);
@@ -119,19 +134,24 @@ function parseFile(evt){
 }
 
 function addEditorModules(rootNode = document, addToRoot = false){
-  const editElements = Array.from(rootNode.querySelectorAll('[data-mve]'));
-  const listElements = Array.from(rootNode.querySelectorAll('[data-mve-list]'));
+  const qsa = (selector) => Array.from(rootNode.querySelectorAll(selector));
+  const types = ['html', 'text', 'image'];
 
-  editElements.map(addEditorToElement);
-  listElements.map((listel) => {
+  types.map((type) => {
+    qsa('[data-mve-' + type + ']').map((el) => addEditorToElement(el, type));
+  })
+
+  qsa('[data-mve-list]').map((listel) => {
     const kids = Array.from(listel.children).filter((el) => !el.classList.contains('__menuContainer'));
     kids.map(addItemMenuToElement);
   });
 
   if(addToRoot){
-    if(rootNode.hasAttribute('data-mve')){
-      addEditorToElement(rootNode);
-    }
+    types.map((type) => {
+      if(rootNode.hasAttribute('data-mve-' + type)){
+        addEditorToElement(rootNode, type);
+      }
+    });
     if(rootNode.parentNode.hasAttribute('data-mve-list')){
       addItemMenuToElement(rootNode);
     }
@@ -139,10 +159,12 @@ function addEditorModules(rootNode = document, addToRoot = false){
 }
 
 function removeEditorModules(rootNode, datapath){
+  const qsa = (selector) => Array.from(rootNode.querySelectorAll(selector));
+
   Object.keys(_editors).filter((key) => key.indexOf(datapath) === 0).map((key) => {
     _editors[key].destroy();
   });
-  Array.from(rootNode.querySelectorAll('[data-mve]')).map((el) => {
+  qsa('[data-mve]').map((el) => {
     el.removeEventListener('blur', onEditorBlur);
   });
   rootNode.style.backgroundColor= null;
