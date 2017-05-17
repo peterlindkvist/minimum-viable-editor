@@ -18,13 +18,18 @@ function resolveFullPath(el, attribute){
   if(el === document.body){
     return '';
   }
+
+  //sconsole.log("hasAttribute parent", el, attribute);
   const parent = el.parentNode;
   if(parent.hasAttribute('data-mve-list')){
     const index = Array.from(parent.children).reduce((acc, curr, i, arr) => (curr === el ? i : acc), -1);
     return parent.getAttribute('data-mve-list').replace('./', resolveFullPath(parent, attribute) + '.') + '.' + index;
+  } else if(el.hasAttribute('data-mve-with')){
+    return el.getAttribute('data-mve-with').replace('./', resolveFullPath(parent, attribute) + '.') ;
   } else if(el.hasAttribute(attribute)){
     return el.getAttribute(attribute).replace('./', resolveFullPath(parent, attribute) + '.');
   } else {
+
     return resolveFullPath(parent, attribute);
   }
 }
@@ -76,6 +81,7 @@ function onEditorBlur(evt){
 function onTextBlur(evt){
   const el = evt.target;
   const path = resolveFullPath(el, 'data-mve-text');
+  console.log("blur", path);
   _set(_content, path, el.innerHTML);
 }
 
@@ -132,7 +138,7 @@ function addEditorModules(rootNode = document, addToRoot = false){
   const types = ['html', 'text', 'image'];
 
   types.map((type) => {
-    qsa('[data-mve-' + type + ']').map((el) => addEditorToElement(el,type));
+    qsa('[data-mve-' + type + ']').map((el) => addEditorToElement(el, type));
   })
 
   qsa('[data-mve-list]').map((listel) => {

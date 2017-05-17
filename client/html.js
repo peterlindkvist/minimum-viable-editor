@@ -26,12 +26,21 @@ function addThirdPartyCSS(){
 }
 
 function addSaveButton(callback){
+  const size = 50;
   const style = {
     position: 'fixed',
-    bottom: '10px',
-    right: '10px',
+    width : size + 'px',
+    height : size + 'px',
+    bottom: '15px',
+    right: '15px',
     fontSize: '2em',
     cursor : 'pointer',
+    boxShadow: '2px 2px 5px darkgray',
+    borderRadius : size / 2 + 'px',
+    textAlign : 'center',
+    paddingTop : '9px',
+    paddingLeft : '2px'
+
   }
   const attributes = {
     'class' : 'material-icons'
