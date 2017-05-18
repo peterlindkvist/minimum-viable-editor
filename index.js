@@ -22,25 +22,34 @@ function init(config){
 }
 
 
-function addContent(req, res, next){
-  getContent((err, data) => {
-    req.content = data;
-    next(err);
-  });
+function addContent(lang = ''){
+  return (req, res, next) => {
+    getContent(lang, (err, data) => {
+      const langPath = lang === '' ? '' :  '/' + lang;
+      req.content = Object.assign({}, {
+        _mve : {
+          lang,
+          loader : _config.editorUrl + '/assets' + langPath + '/loader.js',
+          index : _config.editorUrl + '/assets' + langPath + '/index.js'
+        }
+      }, data);
+      next(err);
+    });
+  }
 }
 
-function getContent(callback){
-  _storage.load(callback);
+function getContent(lang, callback){
+  _storage.load(lang, callback);
 }
 
-contentRouter.post('/content/', bodyParser.json(), (req, res, next) => {
-  _storage.save(req.body, function(err) {
-    getContent((err, data) => res.json(data));
+contentRouter.post('/content/:lang?', bodyParser.json(), (req, res, next) => {
+  _storage.save(req.params.lang, req.body, function(err) {
+    getContent(req.params.lang, (err, data) => res.json(data));
   });
 });
 
-contentRouter.get('/content/', (req, res, next) => {
-  getContent((err, data) => res.json(data));
+contentRouter.get('/content/:lang?', (req, res, next) => {
+  getContent(req.params.lang, (err, data) => res.json(data));
 });
 
 contentRouter.post('/files/', fileUpload(), (req, res, next) => {
@@ -54,17 +63,19 @@ assetsRouter.use('/files/:filename', (req, res, next) => {
   res.sendFile(path.join(_config.filesPath,req.params.filename));
 });
 
-assetsRouter.get('/assets/loader.js', (req, res, next) => {
+assetsRouter.get('/assets(/:lang?)/loader.js', (req, res, next) => {
   const config = {
     hash : _config.hash,
+    lang : req.params.lang || '',
     index : req.originalUrl.replace('loader.js', 'index.js')
   }
   _serveAsset('loader.js', config, (err, data) => res.end(data));
 });
 
-assetsRouter.get('/assets/index.js', (req, res, next) => {
+assetsRouter.get('/assets(/:lang?)/index.js', (req, res, next) => {
   const config = {
-    editorUrl : _config.editorUrl
+    editorUrl : _config.editorUrl,
+    lang : req.params.lang || ''
   }
   _serveAsset('index.js', config, (err, data) => res.end(data));
 });
@@ -83,26 +94,26 @@ function basicAuth(){
   }));
 }
 
+
 function simpleSetup(config){
   const dataPath = config.dataPath || path.join(__dirname, '..', 'data');
 
   const conf = Object.assign({}, {
     storage : 'file',
-    contentPath : path.join(dataPath, 'editor.json'),
+    contentPath : dataPath,
     filesPath :  path.join(dataPath, 'files'),
+    lang : {params : 'lang'},
     editorUrl : '/mve',
     hash : 'editor',
     users : []
   }, config);
 
-  console.log("conf", conf);
   init(conf);
 
   const router = express.Router();
 
   router.use(conf.editorUrl, assetsRouter); // add the public assets router
   router.use(conf.editorUrl, basicAuth(), contentRouter); // add the private content router (behind some kind of authentification)
-  router.use(addContent);
   return router;
 }
 

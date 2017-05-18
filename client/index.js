@@ -19,7 +19,6 @@ function resolveFullPath(el, attribute){
     return '';
   }
 
-  //sconsole.log("hasAttribute parent", el, attribute);
   const parent = el.parentNode;
   if(parent.hasAttribute('data-mve-list')){
     const index = Array.from(parent.children).reduce((acc, curr, i, arr) => (curr === el ? i : acc), -1);
@@ -81,7 +80,6 @@ function onEditorBlur(evt){
 function onTextBlur(evt){
   const el = evt.target;
   const path = resolveFullPath(el, 'data-mve-text');
-  console.log("blur", path);
   _set(_content, path, el.innerHTML);
 }
 

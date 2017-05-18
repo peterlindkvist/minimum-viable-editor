@@ -4,7 +4,7 @@ function load(callback){
   const options =  {
     credentials: 'include'
   };
-  fetch(_config.editorUrl + '/content/', options).then((resp) => resp.json()).then(callback);
+  fetch(_config.editorUrl + '/content/' + _config.lang, options).then((resp) => resp.json()).then(callback);
 }
 
 function save(content, callback){
@@ -18,7 +18,7 @@ function save(content, callback){
     }
   };
 
-  fetch(_config.editorUrl + '/content/', options).then(callback);
+  fetch(_config.editorUrl + '/content/' + _config.lang, options).then(callback);
 }
 
 function uploadFile(file, name, callback){
