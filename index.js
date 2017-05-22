@@ -24,7 +24,7 @@ function init(config){
 
 function addContent(lang = ''){
   return (req, res, next) => {
-    getContent(lang, (err, data) => {
+    getContent(lang).then((data) => {
       const langPath = lang === '' ? '' :  '/' + lang;
       req.content = Object.assign({}, {
         _mve : {
@@ -33,30 +33,30 @@ function addContent(lang = ''){
           index : _config.editorUrl + '/assets' + langPath + '/index.js'
         }
       }, data);
-      next(err);
-    });
+      next();
+    }).catch(next);
   }
 }
 
-function getContent(lang, callback){
-  _storage.load(lang, callback);
+function getContent(lang){
+  return _storage.load(lang);
 }
 
 contentRouter.post('/content/:lang?', bodyParser.json(), (req, res, next) => {
-  _storage.save(req.params.lang, req.body, function(err) {
-    getContent(req.params.lang, (err, data) => res.json(data));
-  });
+  _storage.save(req.params.lang, req.body).then(() => {
+    return getContent(req.params.lang);
+  }).then((data) => res.json(data)).catch(next);
 });
 
 contentRouter.get('/content/:lang?', (req, res, next) => {
-  getContent(req.params.lang, (err, data) => res.json(data));
+  getContent(req.params.lang).then((data) => res.json(data)).catch(next);
 });
 
 contentRouter.post('/files/', fileUpload(), (req, res, next) => {
   const name = Object.keys(req.files)[0];
-  _storage.upload(req.files[name], name, (err, path) => {
+  _storage.upload(req.files[name], name).then((path) => {
     res.end(path);
-  });
+  }).catch(next);
 });
 
 assetsRouter.use('/files/:filename', (req, res, next) => {
@@ -69,7 +69,7 @@ assetsRouter.get('/assets(/:lang?)/loader.js', (req, res, next) => {
     lang : req.params.lang || '',
     index : req.originalUrl.replace('loader.js', 'index.js')
   }
-  _serveAsset('loader.js', config, (err, data) => res.end(data));
+  _serveAsset('loader.js', config, res);
 });
 
 assetsRouter.get('/assets(/:lang?)/index.js', (req, res, next) => {
@@ -77,14 +77,14 @@ assetsRouter.get('/assets(/:lang?)/index.js', (req, res, next) => {
     editorUrl : _config.editorUrl,
     lang : req.params.lang || ''
   }
-  _serveAsset('index.js', config, (err, data) => res.end(data));
+  _serveAsset('index.js', config, res);
 });
 
-function _serveAsset(filename, config, callback){
+function _serveAsset(filename, config, res){
   const file = path.join(__dirname, 'assets', filename);
   fs.readFile(file, 'utf-8', (err, data) => {
     data = data.replace('MVE_CONFIG', JSON.stringify(config));
-    callback(err, data);
+    res.end(data);
   });
 }
 
@@ -105,7 +105,8 @@ function simpleSetup(config){
     lang : {params : 'lang'},
     editorUrl : '/mve',
     hash : 'editor',
-    users : []
+    users : [],
+    splitContent : false,
   }, config);
 
   init(conf);

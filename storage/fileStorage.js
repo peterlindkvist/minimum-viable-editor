@@ -1,4 +1,4 @@
-const fs = require('fs');
+const fs = require('fs-extra');
 
 let _config;
 
@@ -10,23 +10,27 @@ function getFileName(name){
   return _config.contentPath + '/' + (name || 'content') + '.json';
 }
 
-function save(lang, content, callback){
-  const jsonStr = JSON.stringify(content, null, 2);
-  fs.writeFile(getFileName(lang), jsonStr, callback);
+function save(lang, content){
+  //const jsonStr = JSON.stringify(content, null, 2);
+  return fs.writeJSON(getFileName(lang), content, {spaces: 2});
 }
 
-function load(lang, callback){
-  fs.readFile(getFileName(lang), 'utf8', (err, data) => {
-    callback(err, err ? null : JSON.parse(data));
-  });
+function load(lang){
+  return fs.readJson(getFileName(lang));
 }
 
-function upload(file, filename, callback){
+function upload(file, filename){
   const filePath = _config.filesPath + '/' + filename;
   const publicUrl = _config.editorUrl + '/files/' + filename;
-  file.mv(filePath, (err) => {
-    callback(err, publicUrl);
-  });
+  return new Promise((resolve, reject) => {
+    file.mv(filePath, (err) => {
+      if(err){
+        reject(err);
+      } else {
+        resolve(publicUrl);
+      }
+    });
+  })
 }
 
 module.exports = {
