@@ -2,7 +2,7 @@ const fs = require('fs-extra');
 
 let _config;
 
-function init(config){
+function setup(config){
   _config = config;
 }
 
@@ -51,7 +51,7 @@ function upload(file, filename){
 }
 
 module.exports = {
-  init,
+  setup,
   save,
   load,
   upload

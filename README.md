@@ -76,7 +76,7 @@ To be able to controll more of the routing the internal routing can be used inst
 
     const mve = require('minimum-viable-editor');
 
-    mve.init({
+    mve.setup({
       storage : 'file',
       contentPath : path.join(__dirname, 'data', 'content.json'),
       filesPath : path.join(__dirname, 'data', 'files'),

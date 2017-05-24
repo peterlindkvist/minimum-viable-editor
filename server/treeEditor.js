@@ -47,7 +47,7 @@ function html(type, key, top, content){
         break;
     }
 
-    return '<li>' + key + ':<' + tag + attr + '>' + content + '</' + tag + '></li>';
+    return '<li><strong>' + key + ': </strong><' + tag + attr + '>' + content + '</' + tag + '></li>';
   }
 }
 
