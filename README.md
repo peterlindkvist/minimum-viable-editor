@@ -60,8 +60,8 @@ In your node app:
     const mve = require('minimum-viable-editor');
 
     router.use(mve.simpleSetup({
-      dataPath : path.join(__dirname, 'data');    // folder for content json and uploaded files.
-      users : ['user:123']                        //users to be able to edit the content in the form username:password
+      dataPath : './data';              // folder for content json and uploaded files.
+      users : ['user:123']              //users to be able to edit the content in the form username:password
     }));
 
     router.get('/content.json', mve.addContent(), (req, res, next) => res.json(req.content));
@@ -72,14 +72,14 @@ Add a json file in the dataPath folder with your content data. And add the folde
 
 ### Advanced setup
 
-To be able to controll more of the routing the internal routing can be used instead.
+To be able to control more of the routing the internal routing can be used instead.
 
     const mve = require('minimum-viable-editor');
 
     mve.setup({
       storage : 'file',
-      contentPath : path.join(__dirname, 'data', 'content.json'),
-      filesPath : path.join(__dirname, 'data', 'files'),
+      contentPath : './data/content.json',
+      filesPath : ./data/files,
       editorUrl : '/editor',
       hash : 'editor'
     });
@@ -91,14 +91,9 @@ To be able to controll more of the routing the internal routing can be used inst
     app.use('/editor', basicAuth, mve.contentRouter); // add the private content router (behind some kind of authentification)
 
 
-
 ### HTML
 
-And in the html add :
-
-    <script type="text/javascript" src="/editor/assets/loader.js"></script>
-
-Or simplier in handlebars
+And in the html add (in handlebars) :
 
       <script type="text/javascript" src="{{_mve.loader}}"></script>
 
@@ -122,12 +117,12 @@ Add an extra data-mve attribute to every tag you want to edit. Use the [lodash](
 
 MVE also includes a simple json tree editor.
 
-router.get('/content', mve.basicAuth, mve.addContent(), (req, res, next) => {
-  res.render('content', {
-    html : mve.treeEditor(req.content),
-    _mve : req.content._mve
-  });
-});
+    router.get('/content', mve.basicAuth, mve.addContent(), (req, res, next) => {
+      res.render('content', {
+        html : mve.treeEditor(req.content),
+        _mve : req.content._mve
+      });
+    });
 
 ## Internationalization (Beta)
 
