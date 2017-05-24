@@ -64,6 +64,8 @@ In your node app:
       users : ['user:123']                        //users to be able to edit the content in the form username:password
     }));
 
+    router.get('/content.json', mve.addContent(), (req, res, next) => res.json(req.content));
+
 See advanced setup for more config parameters.
 
 Add a json file in the dataPath folder with your content data. And add the folder assets upload.
@@ -83,7 +85,7 @@ To be able to controll more of the routing the internal routing can be used inst
     });
 
     const app = express();
-    app.use(mve.addContent); // adds the content to req.content
+    app.use(mve.addContent()); // adds the content to req.content
     app.use('/', index);  //uses the req.content when populating the templates.
     app.use('/editor', mve.assetsRouter); // add the public assets router
     app.use('/editor', basicAuth, mve.contentRouter); // add the private content router (behind some kind of authentification)
@@ -95,6 +97,10 @@ To be able to controll more of the routing the internal routing can be used inst
 And in the html add :
 
     <script type="text/javascript" src="/editor/assets/loader.js"></script>
+
+Or simplier in handlebars
+
+      <script type="text/javascript" src="{{_mve.loader}}"></script>
 
 Add an extra data-mve attribute to every tag you want to edit. Use the [lodash](https://lodash.com/docs/4.17.4#get) set/get format to define the data property.
 
@@ -129,7 +135,7 @@ The editor doesn't provide any kind of security except the basic auth. But you c
 Since its only possible to edit visible elements you have to create a different page and add these
 texts as normal elements. To fetch the editor directly instead of adding #editor, use the index.js.
 
-    <script type="text/javascript" src="/editor/assets/index.js"></script>
+    <script type="text/javascript" src="{{_mve.index}}"></script>
 
 ## Tests
 

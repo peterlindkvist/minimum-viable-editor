@@ -38,8 +38,7 @@ function addSaveButton(callback){
     boxShadow: '2px 2px 5px darkgray',
     borderRadius : size / 2 + 'px',
     textAlign : 'center',
-    paddingTop : '9px',
-    paddingLeft : '2px'
+    lineHeight : 1.5
 
   }
   const attributes = {

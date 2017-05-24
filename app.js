@@ -4,6 +4,7 @@ const fileUpload = require('express-fileupload');
 const path = require('path');
 const fs = require('fs');
 const auth = require('http-auth');
+const treeEditor = require('./server/treeEditor');
 
 const contentRouter = express.Router();
 const assetsRouter = express.Router();
@@ -16,23 +17,27 @@ function init(config){
   switch(config.storage){
     case 'file':
     default:
-      _storage = require('./storage/fileStorage');
+      _storage = require('./server/storage/fileStorage');
   }
   _storage.init(config);
 }
 
 
-function addContent(lang = ''){
+function addContent(lang = '', addMetaData = false){
   return (req, res, next) => {
     getContent(lang).then((data) => {
       const langPath = lang === '' ? '' :  '/' + lang;
-      req.content = Object.assign({}, {
-        _mve : {
-          lang,
-          loader : _config.editorUrl + '/assets' + langPath + '/loader.js',
-          index : _config.editorUrl + '/assets' + langPath + '/index.js'
-        }
-      }, data);
+      if(addMetaData){
+        req.content = Object.assign({}, {
+          _mve : {
+            lang,
+            loader : _config.editorUrl + '/assets' + langPath + '/loader.js',
+            index : _config.editorUrl + '/assets' + langPath + '/index.js'
+          }
+        }, data);
+      } else {
+        req.content = data;
+      }
       next();
     }).catch(next);
   }
@@ -107,6 +112,7 @@ function simpleSetup(config){
     hash : 'editor',
     users : [],
     splitContent : false,
+    auth : basicAuth
   }, config);
 
   init(conf);
@@ -114,10 +120,9 @@ function simpleSetup(config){
   const router = express.Router();
 
   router.use(conf.editorUrl, assetsRouter); // add the public assets router
-  router.use(conf.editorUrl, basicAuth(), contentRouter); // add the private content router (behind some kind of authentification)
+  router.use(conf.editorUrl, conf.auth, contentRouter); // add the private content router (behind some kind of authentification)
   return router;
 }
-
 
 module.exports = {
   init,
@@ -126,5 +131,6 @@ module.exports = {
   contentRouter,
   assetsRouter,
   simpleSetup,
-  basicAuth
+  basicAuth,
+  treeEditor : treeEditor.render
 }
