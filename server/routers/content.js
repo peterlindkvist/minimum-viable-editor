@@ -1,6 +1,8 @@
 const router = require('express').Router();
 const bodyParser = require('body-parser');
 const fileUpload = require('express-fileupload');
+const sanitizeHtml = require('sanitize-html');
+const deepMap = require('deep-map');
 
 let _config;
 
@@ -39,7 +41,9 @@ function getContent(lang){
 }
 
 router.post('/content/:lang?', bodyParser.json(), (req, res, next) => {
-  _storage.save(req.params.lang, req.body).then(() => {
+  const content = deepMap(req.body, (value) => sanitizeHtml(value));
+
+  _storage.save(req.params.lang, content).then(() => {
     return getContent(req.params.lang);
   }).then((data) => res.json(data)).catch(next);
 });

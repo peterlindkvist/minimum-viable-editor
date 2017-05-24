@@ -118,7 +118,7 @@ function createElement() {
 }
 
 function addThirdPartyCSS() {
-  ['https://fonts.googleapis.com/icon?family=Material+Icons', '//cdn.jsdelivr.net/medium-editor/5.22.2/css/medium-editor.min.css', '//cdn.jsdelivr.net/medium-editor/5.22.2/css/themes/default.min.css'].map(function (file) {
+  ['https://fonts.googleapis.com/icon?family=Material+Icons', 'https://cdn.jsdelivr.net/medium-editor/5.22.2/css/medium-editor.min.css', 'https://cdn.jsdelivr.net/medium-editor/5.22.2/css/themes/default.min.css'].map(function (file) {
     var attributes = {
       rel: 'stylesheet',
       href: file,
@@ -10301,55 +10301,6 @@ function saveContent(evt) {
   });
 }
 
-function resolveFullPath2(el, attribute) {
-  var ret = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : [];
-
-  if (el === document.body) {
-    console.log("path", ret);
-    return ret.reverse().filter(function (i) {
-      return i !== undefined;
-    }).join('.');
-  }
-
-  //childest;
-  var parent = el.parentNode;
-  var key = void 0,
-      next = true;
-  if (el.hasAttribute(attribute)) {
-    key = el.getAttribute(attribute);
-    ret.push(key.replace('./', ''));
-    next = key.substr(2) === './';
-  }
-
-  if (parent.hasAttribute('data-mve-list')) {
-    ret.push(Array.from(el.children).reduce(function (acc, curr, i, arr) {
-      return curr === el ? i : acc;
-    }, undefined));
-    ret.push(parent.getAttribute('data-mve-list'));
-  } else if (parent.hasAttribute('data-mve-with')) {
-    var _key = parent.getAttribute('data-mve-with');
-    ret.push(_key.replace('./', ''));
-    next = _key.substr(2) === './';
-  }
-
-  //if(next){
-  return resolveFullPath(parent, attribute, ret);
-  //}
-  /*
-    console.log("resolve", el, parent);
-    if(el.hasAttribute('data-mve-list')){
-      const index = Array.from(el.children).reduce((acc, curr, i, arr) => (curr === el ? i : acc), -1);
-      return el.getAttribute('data-mve-list').replace('./', resolveFullPath(parent, attribute) + '.') + '.' + index;
-    } else if(el.hasAttribute('data-mve-with')){
-      return el.getAttribute('data-mve-with').replace('./', resolveFullPath(parent, attribute) + '.') ;
-    } else if(el.hasAttribute(attribute)){
-      return el.getAttribute(attribute).replace('./', resolveFullPath(parent, attribute) + '.');
-    } else {
-  
-      return resolveFullPath(parent, attribute, ret);
-    }*/
-}
-
 function resolveFullPath(el, attribute) {
   if (el === document.body) {
     return '';
@@ -10384,8 +10335,6 @@ function modifyList(type, el) {
 
   var list = _get(_content, listpath);
 
-  console.log("modify", type, el, datapath, listpath, index);
-
   removeEditorModules(el, datapath);
 
   switch (type) {
@@ -10417,17 +10366,13 @@ function modifyList(type, el) {
 }
 
 function onEditorBlur(evt) {
-  var el = evt.target;
-  var path = resolveFullPath(el, 'data-mve-html');
-  removeEditorModules(el, path);
-  _set(_content, path, el.innerHTML);
-  addEditorModules(el, true);
+  var path = resolveFullPath(evt.target, 'data-mve-html');
+  _set(_content, path, _editors[path].getContent());
 }
 
 function onTextBlur(evt) {
   var el = evt.target;
   var path = resolveFullPath(el, 'data-mve-text');
-  console.log("text", path);
   _set(_content, path, el.innerHTML);
 }
 

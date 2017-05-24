@@ -14,48 +14,6 @@ function saveContent(evt){
   });
 }
 
-function resolveFullPath2(el, attribute, ret = []){
-  if(el === document.body){
-    console.log("path", ret);
-    return ret.reverse().filter((i) => i !== undefined).join('.');
-  }
-
-  //childest;
-  const parent = el.parentNode;
-  let key, next = true;
-  if(el.hasAttribute(attribute)){
-    key = el.getAttribute(attribute);
-    ret.push(key.replace('./', ''));
-    next = key.substr(2) === './';
-  }
-
-  if(parent.hasAttribute('data-mve-list')){
-    ret.push(Array.from(el.children).reduce((acc, curr, i, arr) => (curr === el ? i : acc), undefined));
-    ret.push(parent.getAttribute('data-mve-list'));
-  } else if(parent.hasAttribute('data-mve-with')){
-    const key = parent.getAttribute('data-mve-with');
-    ret.push(key.replace('./', ''));
-    next = key.substr(2) === './';
-  }
-
-  //if(next){
-    return resolveFullPath(parent, attribute, ret);
-  //}
-/*
-  console.log("resolve", el, parent);
-  if(el.hasAttribute('data-mve-list')){
-    const index = Array.from(el.children).reduce((acc, curr, i, arr) => (curr === el ? i : acc), -1);
-    return el.getAttribute('data-mve-list').replace('./', resolveFullPath(parent, attribute) + '.') + '.' + index;
-  } else if(el.hasAttribute('data-mve-with')){
-    return el.getAttribute('data-mve-with').replace('./', resolveFullPath(parent, attribute) + '.') ;
-  } else if(el.hasAttribute(attribute)){
-    return el.getAttribute(attribute).replace('./', resolveFullPath(parent, attribute) + '.');
-  } else {
-
-    return resolveFullPath(parent, attribute, ret);
-  }*/
-}
-
 function resolveFullPath(el, attribute){
   if(el === document.body){
     return '';
@@ -83,8 +41,6 @@ function modifyList(type, el){
   const listEl = el.parentNode;
   const [,listpath, index] = datapath.match(/(.*)\.([0-9]*)/);
   const list = _get(_content, listpath);
-
-  console.log("modify", type, el, datapath, listpath, index);
 
   removeEditorModules(el, datapath);
 
@@ -117,17 +73,13 @@ function modifyList(type, el){
 }
 
 function onEditorBlur(evt){
-  const el = evt.target;
-  const path = resolveFullPath(el, 'data-mve-html');
-  removeEditorModules(el, path);
-  _set(_content, path, el.innerHTML);
-  addEditorModules(el, true);
+  const path = resolveFullPath(evt.target, 'data-mve-html');
+  _set(_content, path, _editors[path].getContent());
 }
 
 function onTextBlur(evt){
   const el = evt.target;
   const path = resolveFullPath(el, 'data-mve-text');
-  console.log("text", path);
   _set(_content, path, el.innerHTML);
 }
 
