@@ -118,16 +118,37 @@ Add an extra data-mve attribute to every tag you want to edit. Use the [lodash](
       </div>
     </div>
 
+## Tree editor
+
+MVE also includes a simple json tree editor.
+
+router.get('/content', mve.basicAuth, mve.addContent(), (req, res, next) => {
+  res.render('content', {
+    html : mve.treeEditor(req.content),
+    _mve : req.content._mve
+  });
+});
+
+## Internationalization (Beta)
+
+Add a lang parameter to addContent to retrive another language.
+
+    router.get('/content', mve.basicAuth, mve.addContent('sv_se'), (req, res, next) => {
+      res.render('content', {
+        html : mve.treeEditor(req.content),
+        _mve : req.content._mve
+      });
+    });
+
+    router.get('/content.json', mve.addContent('sv_se', false), (req, res, next) => {
+      res.json(req.content);
+    });     
+
+A `sv_se.json` need to be added to the data folder. The _mve property in content is updated for the new language.
 
 ## Security
 
-The editor doesn't provide any kind of security except the basic auth. But you can add a middleware in front of the contentRouter.
-
-    const auth = require('http-auth');
-    const basicAuth = auth.connect(auth.basic({ realm: "Content Editor" }, (username, password, callback) => {
-        callback(username === "user" && password === "pwd");
-    }));
-    app.use('/editor', basicAuth, mve.contentRouter);
+The editor doesn't provide any kind of security except the basic auth. To change authentification middleware pass a auth middleware to setup as a auth-parameter. Or Implement something more complicated with the advanced setup.
 
 
 ## Editing of invisible elements
