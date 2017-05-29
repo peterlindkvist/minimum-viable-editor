@@ -97,6 +97,8 @@ And in the html add (in handlebars) :
 
       <script type="text/javascript" src="{{_mve.loader}}"></script>
 
+Where the handlebars template data is `req.content`.
+
 Add an extra data-mve attribute to every tag you want to edit. Use the [lodash](https://lodash.com/docs/4.17.4#get) set/get format to define the data property.
 
 (here with handlebars as templating engine)
@@ -152,6 +154,14 @@ Since its only possible to edit visible elements you have to create a different 
 texts as normal elements. To fetch the editor directly instead of adding #editor, use the index.js.
 
     <script type="text/javascript" src="{{_mve.index}}"></script>
+
+## syncronize content
+
+It could be discussed if the data folder with content should be commited and deployed together with the source. It simplifies deployment of new features a lot. To avoid to write over changed content during deployment a sync script is provided. Add to scripts in `package.json`
+
+    "sync-content" : "mve-sync https://[remote server]/content.json ./data/sv_se.json"
+
+And run `npm run sync-content` before starting on new content and before release. The local content and remote content will be deep merged with the remote content as master.
 
 ## Tests
 

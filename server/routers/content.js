@@ -2,6 +2,7 @@ const router = require('express').Router();
 const bodyParser = require('body-parser');
 const fileUpload = require('express-fileupload');
 const sanitizeHtml = require('sanitize-html');
+const deepMerge = require('deepmerge');
 const deepMap = require('deep-map');
 
 let _config;
@@ -40,12 +41,24 @@ function getContent(lang){
   return _storage.load(lang);
 }
 
+function mergeContent(lang, remoteContent){
+  return _storage.load(lang).then((localContent) => {
+     const content = deepMerge(localContent, remoteContent);
+     return _storage.save(lang, content).then(() => content);
+  });
+}
+
 router.post('/content/:lang?', bodyParser.json(), (req, res, next) => {
   const content = deepMap(req.body, (value) => sanitizeHtml(value));
-
   _storage.save(req.params.lang, content).then(() => {
     return getContent(req.params.lang);
   }).then((data) => res.json(data)).catch(next);
+});
+
+router.post('/content/:lang?/merge', bodyParser.json(), (req, res, next) => {
+  const content = deepMap(req.body, (value) => sanitizeHtml(value));
+  mergeContent(req.params.lang, content).
+    then((data) => res.json(data)).catch(next);
 });
 
 router.get('/content/:lang?', (req, res, next) => {
@@ -62,5 +75,6 @@ router.post('/files/', fileUpload(), (req, res, next) => {
 router.setup = setup;
 router.addContent = addContent;
 router.getContent = getContent;
+router.mergeContent = mergeContent;
 
 module.exports = router;
