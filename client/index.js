@@ -72,15 +72,31 @@ function modifyList(type, el){
   }
 }
 
-function onEditorBlur(evt){
-  const path = resolveFullPath(evt.target, 'data-mve-html');
-  _set(_content, path, _editors[path].getContent());
+function onEditorBlur(type){
+  return (evt) => {
+    let content;
+    const el = evt.target;
+    const path = resolveFullPath(el, 'data-mve-' + type);
+
+    switch(type){
+      case 'html':
+        content = _editors[path].getContent();
+        break;
+      case 'number':
+        content = parseFloat(el.innerText);
+        break;
+      default:
+        content = el.innerText;
+        break;
+    }
+    _set(_content, path, content);
+  }
 }
 
-function onTextBlur(evt){
-  const el = evt.target;
-  const path = resolveFullPath(el, 'data-mve-text');
-  _set(_content, path, el.innerHTML);
+function onChangeNumber(evt){
+  if (!(evt.keyCode >= 48 && evt.keyCode <= 57 || evt.keyCode === 46)){
+    evt.preventDefault();
+  }
 }
 
 function addEditorToElement(el, type) {
@@ -93,15 +109,17 @@ function addEditorToElement(el, type) {
         _upload.click();
       });
       break;
+    case 'number':
+      el.addEventListener('keypress', onChangeNumber);
     case 'text':
       el.setAttribute('contenteditable', true);
       el.innerHTML = data;
-      el.addEventListener('blur', onTextBlur);
+      el.addEventListener('blur', onEditorBlur(type));
       break;
     case 'html':
       _editors[path] = new MediumEditor(el);
       el.innerHTML = data;
-      el.addEventListener('blur', onEditorBlur);
+      el.addEventListener('blur', onEditorBlur(type));
       break;
   }
   el.addEventListener('mouseover', (evt) => el.style.backgroundColor = 'rgba(255, 0, 0, 0.1)');
@@ -109,6 +127,7 @@ function addEditorToElement(el, type) {
 }
 
 function addItemMenuToElement(el) {
+  console.log("addItemMenuToElement", el);
   html.addItemMenu(el, modifyList);
 }
 
@@ -133,7 +152,7 @@ function parseFile(evt){
 
 function addEditorModules(rootNode = document, addToRoot = false){
   const qsa = (selector) => Array.from(rootNode.querySelectorAll(selector));
-  const types = ['html', 'text', 'image'];
+  const types = ['html', 'text', 'number', 'image'];
 
   types.map((type) => {
     qsa('[data-mve-' + type + ']').map((el) => addEditorToElement(el, type));

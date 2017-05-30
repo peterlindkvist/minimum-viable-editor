@@ -48,8 +48,16 @@ function mergeContent(lang, remoteContent){
   });
 }
 
+function sanitize(str){
+  if('' + str === '' + parseFloat(str)){
+    return parseFloat(str);
+  } else {
+    return sanitizeHtml(str);
+  }
+}
+
 router.post('/content/:lang?', bodyParser.json(), (req, res, next) => {
-  const content = deepMap(req.body, (value) => sanitizeHtml(value));
+  const content = deepMap(req.body, (value) => sanitize(value));
   _storage.save(req.params.lang, content).then(() => {
     return getContent(req.params.lang);
   }).then((data) => res.json(data)).catch(next);

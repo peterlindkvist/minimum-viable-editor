@@ -2,8 +2,8 @@
 const rp = require('request-promise-native');
 const contentRouter = require('../server/routers/content');
 
-if(process.argv.length <=3){
-  console.log("usage: mve-sync from to");
+if(process.argv.length <= 3){
+  console.log("usage: mve-sync fromURI toFile");
   exit();
 }
 

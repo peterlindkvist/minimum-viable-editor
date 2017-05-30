@@ -32,7 +32,7 @@ function simpleSetup(config){
     hash : 'editor',
     users : [],
     splitContent : false,
-    auth : basicAuth
+    auth : basicAuth()
   }, config);
 
   setup(conf);

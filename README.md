@@ -15,6 +15,10 @@ text you want to edit. Press ctrl + s or click the floppydisk in the lower right
 
 Add a `data-mve-text="[path to text in content json]"` attribute and the tag becomes contenteditable.
 
+### data-mve-number
+
+Add a `data-mve-number="[path to text in content json]"` attribute and the tag becomes contenteditable but only numbers and "." is allowed. The property in json will be a number instead of a string.
+
 ### data-mve-html
 
 Add a `data-mve-html="[path to text in content json]"` attribute and a medium editor is added to the tag.

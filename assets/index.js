@@ -10365,15 +10365,31 @@ function modifyList(type, el) {
   }
 }
 
-function onEditorBlur(evt) {
-  var path = resolveFullPath(evt.target, 'data-mve-html');
-  _set(_content, path, _editors[path].getContent());
+function onEditorBlur(type) {
+  return function (evt) {
+    var content = void 0;
+    var el = evt.target;
+    var path = resolveFullPath(el, 'data-mve-' + type);
+
+    switch (type) {
+      case 'html':
+        content = _editors[path].getContent();
+        break;
+      case 'number':
+        content = parseFloat(el.innerText);
+        break;
+      default:
+        content = el.innerText;
+        break;
+    }
+    _set(_content, path, content);
+  };
 }
 
-function onTextBlur(evt) {
-  var el = evt.target;
-  var path = resolveFullPath(el, 'data-mve-text');
-  _set(_content, path, el.innerHTML);
+function onChangeNumber(evt) {
+  if (!(evt.keyCode >= 48 && evt.keyCode <= 57 || evt.keyCode === 46)) {
+    evt.preventDefault();
+  }
 }
 
 function addEditorToElement(el, type) {
@@ -10386,15 +10402,17 @@ function addEditorToElement(el, type) {
         _upload.click();
       });
       break;
+    case 'number':
+      el.addEventListener('keypress', onChangeNumber);
     case 'text':
       el.setAttribute('contenteditable', true);
       el.innerHTML = data;
-      el.addEventListener('blur', onTextBlur);
+      el.addEventListener('blur', onEditorBlur(type));
       break;
     case 'html':
       _editors[path] = new MediumEditor(el);
       el.innerHTML = data;
-      el.addEventListener('blur', onEditorBlur);
+      el.addEventListener('blur', onEditorBlur(type));
       break;
   }
   el.addEventListener('mouseover', function (evt) {
@@ -10406,6 +10424,7 @@ function addEditorToElement(el, type) {
 }
 
 function addItemMenuToElement(el) {
+  console.log("addItemMenuToElement", el);
   html.addItemMenu(el, modifyList);
 }
 
@@ -10435,7 +10454,7 @@ function addEditorModules() {
   var qsa = function qsa(selector) {
     return Array.from(rootNode.querySelectorAll(selector));
   };
-  var types = ['html', 'text', 'image'];
+  var types = ['html', 'text', 'number', 'image'];
 
   types.map(function (type) {
     qsa('[data-mve-' + type + ']').map(function (el) {

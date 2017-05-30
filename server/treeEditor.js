@@ -7,6 +7,8 @@ function render(content, key, top = true){
         return html('object', key, top, Object.keys(content).map((i) => render(content[i], i, root)).join("\n"));
       } else if(isHTML(content)){
         return html('html', key, top, content);
+      } else if(isNumber(content)){
+        return html('number', key, top, content);
       } else {
         return html('text', key, top, content);
       }
@@ -18,6 +20,10 @@ function isHTML(str){
   const lts = str.match(/</g);
   const gts = str.match(/>/g);
   return !!lts && !!gts && lts.length === gts.length;
+}
+
+function isNumber(str){
+  return '' + str === '' + parseFloat(str);
 }
 
 function html(type, key, top, content){
@@ -40,6 +46,10 @@ function html(type, key, top, content){
       case 'html':
         attr = ' data-mve-html="' + ref + '"';
         tag = 'div';
+        break;
+      case 'number':
+        attr = ' data-mve-number="' + ref + '"';
+        tag = 'span';
         break;
       case 'text':
         attr = ' data-mve-text="' + ref + '"';
