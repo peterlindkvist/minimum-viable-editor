@@ -11,8 +11,8 @@ function createElement(tagName = 'div', style = {}, attributes = {}){
 
 function addThirdPartyCSS(){
   [ 'https://fonts.googleapis.com/icon?family=Material+Icons',
-    '//cdn.jsdelivr.net/medium-editor/5.22.2/css/medium-editor.min.css',
-    '//cdn.jsdelivr.net/medium-editor/5.22.2/css/themes/default.min.css'
+    'https://cdn.jsdelivr.net/medium-editor/5.22.2/css/medium-editor.min.css',
+    'https://cdn.jsdelivr.net/medium-editor/5.22.2/css/themes/default.min.css'
   ].map((file) => {
     const attributes = {
       rel: 'stylesheet',
@@ -38,8 +38,7 @@ function addSaveButton(callback){
     boxShadow: '2px 2px 5px darkgray',
     borderRadius : size / 2 + 'px',
     textAlign : 'center',
-    paddingTop : '9px',
-    paddingLeft : '2px'
+    lineHeight : 1.5
 
   }
   const attributes = {

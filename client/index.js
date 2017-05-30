@@ -19,20 +19,22 @@ function resolveFullPath(el, attribute){
     return '';
   }
 
-  //sconsole.log("hasAttribute parent", el, attribute);
   const parent = el.parentNode;
   if(parent.hasAttribute('data-mve-list')){
     const index = Array.from(parent.children).reduce((acc, curr, i, arr) => (curr === el ? i : acc), -1);
-    return parent.getAttribute('data-mve-list').replace('./', resolveFullPath(parent, attribute) + '.') + '.' + index;
+    return parent.getAttribute('data-mve-list').replace('./', resolveFullPath(parent.parentNode, attribute) + '.') + '.' + index;
   } else if(el.hasAttribute('data-mve-with')){
     return el.getAttribute('data-mve-with').replace('./', resolveFullPath(parent, attribute) + '.') ;
   } else if(el.hasAttribute(attribute)){
-    return el.getAttribute(attribute).replace('./', resolveFullPath(parent, attribute) + '.');
+    const attr = el.getAttribute(attribute);
+    const ending = attr === './' ? '' : '.';
+    return attr.replace('./', resolveFullPath(parent, attribute) + ending);
   } else {
 
     return resolveFullPath(parent, attribute);
   }
 }
+
 
 function modifyList(type, el){
   const datapath = resolveFullPath(el, 'data-mve-list');
@@ -70,19 +72,31 @@ function modifyList(type, el){
   }
 }
 
-function onEditorBlur(evt){
-  const el = evt.target;
-  const path = resolveFullPath(el, 'data-mve-html');
-  removeEditorModules(el, path);
-  _set(_content, path, el.innerHTML);
-  addEditorModules(el, true);
+function onEditorBlur(type){
+  return (evt) => {
+    let content;
+    const el = evt.target;
+    const path = resolveFullPath(el, 'data-mve-' + type);
+
+    switch(type){
+      case 'html':
+        content = _editors[path].getContent();
+        break;
+      case 'number':
+        content = parseFloat(el.innerText);
+        break;
+      default:
+        content = el.innerText;
+        break;
+    }
+    _set(_content, path, content);
+  }
 }
 
-function onTextBlur(evt){
-  const el = evt.target;
-  const path = resolveFullPath(el, 'data-mve-text');
-  console.log("blur", path);
-  _set(_content, path, el.innerHTML);
+function onChangeNumber(evt){
+  if (!(evt.keyCode >= 48 && evt.keyCode <= 57 || evt.keyCode === 46)){
+    evt.preventDefault();
+  }
 }
 
 function addEditorToElement(el, type) {
@@ -95,15 +109,17 @@ function addEditorToElement(el, type) {
         _upload.click();
       });
       break;
+    case 'number':
+      el.addEventListener('keypress', onChangeNumber);
     case 'text':
       el.setAttribute('contenteditable', true);
       el.innerHTML = data;
-      el.addEventListener('blur', onTextBlur);
+      el.addEventListener('blur', onEditorBlur(type));
       break;
     case 'html':
       _editors[path] = new MediumEditor(el);
       el.innerHTML = data;
-      el.addEventListener('blur', onEditorBlur);
+      el.addEventListener('blur', onEditorBlur(type));
       break;
   }
   el.addEventListener('mouseover', (evt) => el.style.backgroundColor = 'rgba(255, 0, 0, 0.1)');
@@ -111,6 +127,7 @@ function addEditorToElement(el, type) {
 }
 
 function addItemMenuToElement(el) {
+  console.log("addItemMenuToElement", el);
   html.addItemMenu(el, modifyList);
 }
 
@@ -135,7 +152,7 @@ function parseFile(evt){
 
 function addEditorModules(rootNode = document, addToRoot = false){
   const qsa = (selector) => Array.from(rootNode.querySelectorAll(selector));
-  const types = ['html', 'text', 'image'];
+  const types = ['html', 'text', 'number', 'image'];
 
   types.map((type) => {
     qsa('[data-mve-' + type + ']').map((el) => addEditorToElement(el, type));
