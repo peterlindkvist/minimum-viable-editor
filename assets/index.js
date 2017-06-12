@@ -143,7 +143,8 @@ function addSaveButton(callback) {
     boxShadow: '2px 2px 5px darkgray',
     borderRadius: size / 2 + 'px',
     textAlign: 'center',
-    lineHeight: 1.5
+    lineHeight: 1.5,
+    backgroundColor: 'white'
 
   };
   var attributes = {
@@ -10293,11 +10294,18 @@ var _content = void 0,
     _upload = void 0,
     _activeUpload = void 0,
     _editors = {};
+var TYPES = ['html', 'text', 'number', 'image'];
 
 function saveContent(evt) {
   document.activeElement.blur();
   service.save(_content, function (data) {
     console.log("saved");
+  });
+}
+
+function getType(el) {
+  return TYPES.find(function (t) {
+    return el.hasAttribute('data-mve-' + t);
   });
 }
 
@@ -10362,28 +10370,40 @@ function modifyList(type, el) {
       break;
     default:
       addEditorModules(el, true);
+      break;
+
   }
 }
 
-function onEditorBlur(type) {
-  return function (evt) {
-    var content = void 0;
-    var el = evt.target;
-    var path = resolveFullPath(el, 'data-mve-' + type);
+function onEditorBlur(evt) {
+  var content = void 0,
+      addMenu = false;
+  var el = evt.target;
+  var type = getType(el);
+  var path = resolveFullPath(el, 'data-mve-' + type);
 
-    switch (type) {
-      case 'html':
-        content = _editors[path].getContent();
-        break;
-      case 'number':
-        content = parseFloat(el.innerText);
-        break;
-      default:
-        content = el.innerText;
-        break;
-    }
-    _set(_content, path, content);
-  };
+  if (el.querySelector(':scope > .__menuContainer')) {
+    el.removeChild(el.querySelector(':scope > .__menuContainer'));
+    addMenu = true;
+  }
+
+  switch (type) {
+    case 'html':
+      content = _editors[path].getContent();
+      break;
+    case 'number':
+      content = parseFloat(el.innerText);
+      break;
+    default:
+      content = el.innerText;
+      break;
+  }
+
+  _set(_content, path, content);
+
+  if (addMenu) {
+    addItemMenuToElement(el);
+  }
 }
 
 function onChangeNumber(evt) {
@@ -10407,12 +10427,12 @@ function addEditorToElement(el, type) {
     case 'text':
       el.setAttribute('contenteditable', true);
       el.innerHTML = data;
-      el.addEventListener('blur', onEditorBlur(type));
+      el.addEventListener('blur', onEditorBlur);
       break;
     case 'html':
       _editors[path] = new MediumEditor(el);
       el.innerHTML = data;
-      el.addEventListener('blur', onEditorBlur(type));
+      el.addEventListener('blur', onEditorBlur);
       break;
   }
   el.addEventListener('mouseover', function (evt) {
@@ -10424,7 +10444,6 @@ function addEditorToElement(el, type) {
 }
 
 function addItemMenuToElement(el) {
-  console.log("addItemMenuToElement", el);
   html.addItemMenu(el, modifyList);
 }
 
@@ -10454,9 +10473,8 @@ function addEditorModules() {
   var qsa = function qsa(selector) {
     return Array.from(rootNode.querySelectorAll(selector));
   };
-  var types = ['html', 'text', 'number', 'image'];
 
-  types.map(function (type) {
+  TYPES.map(function (type) {
     qsa('[data-mve-' + type + ']').map(function (el) {
       return addEditorToElement(el, type);
     });
@@ -10470,7 +10488,7 @@ function addEditorModules() {
   });
 
   if (addToRoot) {
-    types.map(function (type) {
+    TYPES.map(function (type) {
       if (rootNode.hasAttribute('data-mve-' + type)) {
         addEditorToElement(rootNode, type);
       }
@@ -10491,8 +10509,13 @@ function removeEditorModules(rootNode, datapath) {
   }).map(function (key) {
     _editors[key].destroy();
   });
-  qsa('[data-mve]').map(function (el) {
-    el.removeEventListener('blur', onEditorBlur);
+
+  rootNode.removeEventListener('blur', onEditorBlur);
+
+  TYPES.map(function (type) {
+    qsa('[data-mve-' + type + ']').map(function (el) {
+      el.removeEventListener('blur', onEditorBlur);
+    });
   });
   rootNode.style.backgroundColor = null;
   var menu = rootNode.querySelector(':scope > .__menuContainer');

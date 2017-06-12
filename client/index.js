@@ -6,12 +6,18 @@ const service = require('./service');
 
 const CONTENT_API = '/editor/content/';
 let _content, _upload, _activeUpload, _editors = {};
+const TYPES = ['html', 'text', 'number', 'image'];
+
 
 function saveContent(evt){
   document.activeElement.blur();
   service.save(_content, (data) => {
     console.log("saved");
   });
+}
+
+function getType(el){
+  return TYPES.find((t) => el.hasAttribute('data-mve-'+ t))
 }
 
 function resolveFullPath(el, attribute){
@@ -44,6 +50,7 @@ function modifyList(type, el){
 
   removeEditorModules(el, datapath);
 
+
   switch(type){
     case 'clone':
       list.splice(index, 0, JSON.parse(JSON.stringify(list[index]))); //deep clone
@@ -69,27 +76,39 @@ function modifyList(type, el){
       break;
     default:
       addEditorModules(el, true);
+      break;
+
   }
+
 }
 
-function onEditorBlur(type){
-  return (evt) => {
-    let content;
-    const el = evt.target;
-    const path = resolveFullPath(el, 'data-mve-' + type);
+function onEditorBlur(evt){
+  let content, addMenu = false;
+  const el = evt.target;
+  const type = getType(el);
+  const path = resolveFullPath(el, 'data-mve-' + type);
 
-    switch(type){
-      case 'html':
-        content = _editors[path].getContent();
-        break;
-      case 'number':
-        content = parseFloat(el.innerText);
-        break;
-      default:
-        content = el.innerText;
-        break;
-    }
-    _set(_content, path, content);
+  if(el.querySelector(':scope > .__menuContainer')){
+    el.removeChild(el.querySelector(':scope > .__menuContainer'));
+    addMenu = true;
+  }
+
+  switch(type){
+    case 'html':
+      content = _editors[path].getContent();
+      break;
+    case 'number':
+      content = parseFloat(el.innerText);
+      break;
+    default:
+      content = el.innerText;
+      break;
+  }
+
+  _set(_content, path, content);
+
+  if(addMenu){
+    addItemMenuToElement(el);
   }
 }
 
@@ -114,12 +133,12 @@ function addEditorToElement(el, type) {
     case 'text':
       el.setAttribute('contenteditable', true);
       el.innerHTML = data;
-      el.addEventListener('blur', onEditorBlur(type));
+      el.addEventListener('blur', onEditorBlur);
       break;
     case 'html':
       _editors[path] = new MediumEditor(el);
       el.innerHTML = data;
-      el.addEventListener('blur', onEditorBlur(type));
+      el.addEventListener('blur', onEditorBlur);
       break;
   }
   el.addEventListener('mouseover', (evt) => el.style.backgroundColor = 'rgba(255, 0, 0, 0.1)');
@@ -127,7 +146,6 @@ function addEditorToElement(el, type) {
 }
 
 function addItemMenuToElement(el) {
-  console.log("addItemMenuToElement", el);
   html.addItemMenu(el, modifyList);
 }
 
@@ -152,9 +170,8 @@ function parseFile(evt){
 
 function addEditorModules(rootNode = document, addToRoot = false){
   const qsa = (selector) => Array.from(rootNode.querySelectorAll(selector));
-  const types = ['html', 'text', 'number', 'image'];
 
-  types.map((type) => {
+  TYPES.map((type) => {
     qsa('[data-mve-' + type + ']').map((el) => addEditorToElement(el, type));
   })
 
@@ -164,7 +181,7 @@ function addEditorModules(rootNode = document, addToRoot = false){
   });
 
   if(addToRoot){
-    types.map((type) => {
+    TYPES.map((type) => {
       if(rootNode.hasAttribute('data-mve-' + type)){
         addEditorToElement(rootNode, type);
       }
@@ -181,8 +198,13 @@ function removeEditorModules(rootNode, datapath){
   Object.keys(_editors).filter((key) => key.indexOf(datapath) === 0).map((key) => {
     _editors[key].destroy();
   });
-  qsa('[data-mve]').map((el) => {
-    el.removeEventListener('blur', onEditorBlur);
+
+  rootNode.removeEventListener('blur', onEditorBlur);
+
+  TYPES.map((type) => {
+    qsa('[data-mve-' + type + ']').map((el) => {
+      el.removeEventListener('blur', onEditorBlur);
+    });
   });
   rootNode.style.backgroundColor= null;
   const menu = rootNode.querySelector(':scope > .__menuContainer');
