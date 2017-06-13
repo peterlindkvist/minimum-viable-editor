@@ -32,7 +32,8 @@ function simpleSetup(config){
     hash : 'editor',
     users : [],
     splitContent : false,
-    auth : basicAuth()
+    auth : basicAuth(),
+    mediumOptions : undefined
   }, config);
 
   setup(conf);

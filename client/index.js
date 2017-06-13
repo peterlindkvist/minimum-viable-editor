@@ -4,7 +4,10 @@ const MediumEditor = require('medium-editor');
 const html = require('./html');
 const service = require('./service');
 
-const CONTENT_API = '/editor/content/';
+const _config = MVE_CONFIG;
+console.log("_config", _config);
+service.setup(_config);
+
 let _content, _upload, _activeUpload, _editors = {};
 const TYPES = ['html', 'text', 'number', 'image'];
 
@@ -136,7 +139,7 @@ function addEditorToElement(el, type) {
       el.addEventListener('blur', onEditorBlur);
       break;
     case 'html':
-      _editors[path] = new MediumEditor(el);
+      _editors[path] = new MediumEditor(el, _config.mediumOptions);
       el.innerHTML = data;
       el.addEventListener('blur', onEditorBlur);
       break;

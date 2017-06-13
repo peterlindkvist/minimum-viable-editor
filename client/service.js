@@ -1,4 +1,8 @@
-const _config = MVE_CONFIG;
+let _config;
+
+function setup(config){
+  _config = config;
+}
 
 function load(callback){
   const options =  {
@@ -35,6 +39,7 @@ function uploadFile(file, name, callback){
 }
 
 module.exports = {
+  setup,
   load,
   save,
   uploadFile
