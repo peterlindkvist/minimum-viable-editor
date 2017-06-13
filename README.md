@@ -85,7 +85,12 @@ To be able to control more of the routing the internal routing can be used inste
       contentPath : './data/content.json',
       filesPath : ./data/files,
       editorUrl : '/editor',
-      hash : 'editor'
+      hash : 'editor',
+      mediumOptions : {
+        toolbar: {
+          buttons: ['bold', 'italic', 'underline','anchor', 'h2', 'orderedlist', 'unorderedlist']
+        }
+      }
     });
 
     const app = express();
