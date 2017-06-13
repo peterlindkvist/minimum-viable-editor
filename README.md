@@ -88,7 +88,7 @@ To be able to control more of the routing the internal routing can be used inste
       hash : 'editor',
       mediumOptions : {
         toolbar: {
-          buttons: ['bold', 'italic', 'underline','anchor', 'h2', 'orderedlist', 'unorderedlist']
+          buttons: ['bold', 'italic', 'anchor', 'h2', 'orderedlist', 'unorderedlist']
         }
       }
     });
