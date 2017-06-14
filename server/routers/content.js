@@ -23,11 +23,7 @@ function addContent(lang = '', addMetaData = true){
       const langPath = lang === '' ? '' :  '/' + lang;
       if(addMetaData){
         req.content = Object.assign({}, {
-          _mve : {
-            lang,
-            loader : _config.editorUrl + '/assets' + langPath + '/loader.js',
-            index : _config.editorUrl + '/assets' + langPath + '/index.js'
-          }
+          _mve : getMetaData(lang)
         }, data);
       } else {
         req.content = data;
@@ -39,6 +35,15 @@ function addContent(lang = '', addMetaData = true){
 
 function getContent(lang){
   return _storage.load(lang);
+}
+
+function getMetaData(lang){
+  const langPath = lang === '' ? '' :  '/' + lang;
+  return {
+    lang,
+    loader : _config.editorUrl + '/assets' + langPath + '/loader.js',
+    index : _config.editorUrl + '/assets' + langPath + '/index.js'
+  };
 }
 
 function mergeContent(lang, remoteContent){
@@ -83,6 +88,7 @@ router.post('/files/', fileUpload(), (req, res, next) => {
 router.setup = setup;
 router.addContent = addContent;
 router.getContent = getContent;
+router.getMetaData = getMetaData;
 router.mergeContent = mergeContent;
 
 module.exports = router;

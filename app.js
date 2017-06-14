@@ -49,6 +49,7 @@ module.exports = {
   setup,
   getContent : contentRouter.getContent,
   addContent : contentRouter.addContent,
+  getMetaData : contentRouter.getMetaData,
   contentRouter : contentRouter,
   assetsRouter : assetsRouter,
   simpleSetup,
