@@ -24,7 +24,8 @@ router.get('/assets(/:lang?)/loader.js', (req, res, next) => {
 router.get('/assets(/:lang?)/index.js', (req, res, next) => {
   const config = {
     editorUrl : _config.editorUrl,
-    lang : req.params.lang || ''
+    lang : req.params.lang || '',
+    mediumOptions : _config.mediumOptions
   }
   _serveAsset('index.js', config, res).catch(next);
 });

@@ -4,7 +4,9 @@ const MediumEditor = require('medium-editor');
 const html = require('./html');
 const service = require('./service');
 
-const CONTENT_API = '/editor/content/';
+const _config = MVE_CONFIG;
+service.setup(_config);
+
 let _content, _upload, _activeUpload, _editors = {};
 const TYPES = ['html', 'text', 'number', 'image'];
 
@@ -36,7 +38,6 @@ function resolveFullPath(el, attribute){
     const ending = attr === './' ? '' : '.';
     return attr.replace('./', resolveFullPath(parent, attribute) + ending);
   } else {
-
     return resolveFullPath(parent, attribute);
   }
 }
@@ -49,7 +50,6 @@ function modifyList(type, el){
   const list = _get(_content, listpath);
 
   removeEditorModules(el, datapath);
-
 
   switch(type){
     case 'clone':
@@ -77,9 +77,7 @@ function modifyList(type, el){
     default:
       addEditorModules(el, true);
       break;
-
   }
-
 }
 
 function onEditorBlur(evt){
@@ -136,7 +134,7 @@ function addEditorToElement(el, type) {
       el.addEventListener('blur', onEditorBlur);
       break;
     case 'html':
-      _editors[path] = new MediumEditor(el);
+      _editors[path] = new MediumEditor(el, _config.mediumOptions);
       el.innerHTML = data;
       el.addEventListener('blur', onEditorBlur);
       break;

@@ -262,7 +262,11 @@ module.exports = {
 "use strict";
 
 
-var _config = MVE_CONFIG;
+var _config = void 0;
+
+function setup(config) {
+  _config = config;
+}
 
 function load(callback) {
   var options = {
@@ -302,6 +306,7 @@ function uploadFile(file, name, callback) {
 }
 
 module.exports = {
+  setup: setup,
   load: load,
   save: save,
   uploadFile: uploadFile
@@ -10289,7 +10294,9 @@ var MediumEditor = __webpack_require__(5);
 var html = __webpack_require__(1);
 var service = __webpack_require__(2);
 
-var CONTENT_API = '/editor/content/';
+var _config = MVE_CONFIG;
+service.setup(_config);
+
 var _content = void 0,
     _upload = void 0,
     _activeUpload = void 0,
@@ -10327,7 +10334,6 @@ function resolveFullPath(el, attribute) {
     var ending = attr === './' ? '' : '.';
     return attr.replace('./', resolveFullPath(parent, attribute) + ending);
   } else {
-
     return resolveFullPath(parent, attribute);
   }
 }
@@ -10371,7 +10377,6 @@ function modifyList(type, el) {
     default:
       addEditorModules(el, true);
       break;
-
   }
 }
 
@@ -10430,7 +10435,7 @@ function addEditorToElement(el, type) {
       el.addEventListener('blur', onEditorBlur);
       break;
     case 'html':
-      _editors[path] = new MediumEditor(el);
+      _editors[path] = new MediumEditor(el, _config.mediumOptions);
       el.innerHTML = data;
       el.addEventListener('blur', onEditorBlur);
       break;
