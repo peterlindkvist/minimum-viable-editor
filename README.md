@@ -36,7 +36,7 @@ The data path for the items become content.items.0, content.items.1.
 
 ### data-mve-with
 
-Changes the scope for the data-mve-* tags below. Makes refactoring and texts in partials easier. And saves some bytes in the html.
+Changes the scope for the data-mve-* tags below. Makes refactoring and texts in partials easier. And might save some bytes in the html.
 
     <section data-mve-with="article">
       <h2 data-mve-text="./header">{{article.header}}</h2>
@@ -54,14 +54,7 @@ Click on the image to upload a new one.
 
 ### Install package
 
-It will be added to NPM, as soon its stable.
-
-    npm install peterlindkvist/minimum-viable-editor --save
-
-or
-
-Fetch the repo and run `npm install && npm link`
-then in your project run `npm link minimal-viable-editor`
+    npm install minimum-viable-editor --save
 
 ### Setup
 

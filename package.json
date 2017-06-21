@@ -1,7 +1,7 @@
 {
   "name": "minimum-viable-editor",
   "version": "1.0.0",
-  "description": "A micro content editing system",
+  "description": "A micro content editing system for express",
   "main": "app.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
