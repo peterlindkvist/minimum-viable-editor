@@ -3,11 +3,9 @@ A micro content editing system for the express framework and any frontend.
 
 This content editor uses a js object as data format, the same as most express templating engines.
 
-Adds a nice looking [medium-editor](https://yabwe.github.io/medium-editor/) to every html-tag
-with a data-mve-html attribute.
+Adds a nice looking [medium-editor](https://yabwe.github.io/medium-editor/) to every html-tag with a data-mve-html attribute.
 
-To edit a page, add #editor (defined in config) to the url. And then click on the
-text you want to edit. Press ctrl + s or click the floppydisk in the lower right corner to save.
+To edit a page, add #editor (defined in config) to the url. And then click on the text you want to edit. Press ctrl + s or click the floppydisk in the lower right corner to save.
 
 ## Editor Attributes
 
@@ -44,6 +42,14 @@ Changes the scope for the data-mve-* tags below. Makes refactoring and texts in 
       <h2 data-mve-text="./header">{{article.header}}</h2>
     </section>
 
+### data-mve-image (Beta)
+
+Adds an imagefile upload for images.
+
+    <img src={{image}} data-mve-image="{{image}} />
+
+Click on the image to upload a new one.
+
 ## Installation
 
 ### Install package
@@ -57,48 +63,50 @@ or
 Fetch the repo and run `npm install && npm link`
 then in your project run `npm link minimal-viable-editor`
 
-### Simple setup
+### Setup
 
 In your node app:
 
     const mve = require('minimum-viable-editor');
 
-    router.use(mve.simpleSetup({
+    router.use(mve.setup({
       dataPath : './data';              // folder for content json and uploaded files.
       users : ['user:123']              //users to be able to edit the content in the form username:password
     }));
 
     router.get('/content.json', mve.addContent(), (req, res, next) => res.json(req.content));
 
-See advanced setup for more config parameters.
+See setup parameters for more config parameters.
 
 Add a json file in the dataPath folder with your content data. And add the folder assets upload.
 
-### Advanced setup
+#### Setup parameters
+Parameters to pass into mve.setup.
 
-To be able to control more of the routing the internal routing can be used instead.
+| Parameter     | Default          | Description                                                                   |
+|---------------|------------------|-------------------------------------------------------------------------------|
+| auth          | mve.basicAuth()  | Authentification middleware for content routes.                               |
+| contentPath   | [dataPath]       | Folder on server for storage of content.                                      |
+| dataPath      | ./data           | Folder on server for content and file storage.                                |
+| editorUrl     | /mve             | Route for mve. Used for communication between server and client               |
+| filesPath     | [dataPath]/files | Folder for file uploads.                                                      |
+| hash          | editor           | Hash to att to url in browser to show the editor. eg. /page#editor            |
+| mediumOptions | {}               | Options for the [Medium Editor](https://github.com/yabwe/medium-editor)       |
+| splitContent  | false            | If the content should be splited into multiple files.                         |
+| storage       | file             | Use file storage, more types are in the roadmap as cloud or database storage. |
+| users         | []               | Array of allowed users for content reading and writing. ["user:pwd",...]      |
 
-    const mve = require('minimum-viable-editor');
+#### Methods
+Public method in the package.
 
-    mve.setup({
-      storage : 'file',
-      contentPath : './data/content.json',
-      filesPath : ./data/files,
-      editorUrl : '/editor',
-      hash : 'editor',
-      mediumOptions : {
-        toolbar: {
-          buttons: ['bold', 'italic', 'anchor', 'h2', 'orderedlist', 'unorderedlist']
-        }
-      }
-    });
-
-    const app = express();
-    app.use(mve.addContent()); // adds the content to req.content
-    app.use('/', index);  //uses the req.content when populating the templates.
-    app.use('/editor', mve.assetsRouter); // add the public assets router
-    app.use('/editor', basicAuth, mve.contentRouter); // add the private content router (behind some kind of authentification)
-
+| Method          | Parameters        | Description                                                            |
+|-----------------|-------------------|------------------------------------------------------------------------|
+| mve.addContent  | lang, addMetaData | Middleware that adds content to req.content                            |
+| mve.setup       | see setup         | Initializes the editor                                                 |
+| mve.getContent  | lang              | fetches the content from storage, returns a promise.                   |
+| mve.getMetaData | lang              | fetches metadata about the javascript assets to load.                  |
+| mve.basicAuth   |                   | Middleware for basicAuth, used by the content router. Uses setup.users |
+| mve.treeEditor  | content           | returns html for a simple data object editor                           |
 
 ### HTML
 
@@ -135,7 +143,7 @@ MVE also includes a simple json tree editor.
       });
     });
 
-## Internationalization (Beta)
+## Internationalization
 
 Add a lang parameter to addContent to retrive another language.
 
@@ -164,7 +172,7 @@ texts as normal elements. To fetch the editor directly instead of adding #editor
 
     <script type="text/javascript" src="{{_mve.index}}"></script>
 
-## syncronize content
+## Syncronize content
 
 It could be discussed if the data folder with content should be commited and deployed together with the source. It simplifies deployment of new features a lot. To avoid to write over changed content during deployment a sync script is provided. Add to scripts in `package.json`
 

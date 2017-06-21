@@ -5,7 +5,6 @@ const html = require('./html');
 const service = require('./service');
 
 const _config = MVE_CONFIG;
-console.log("_config", _config);
 service.setup(_config);
 
 let _content, _upload, _activeUpload, _editors = {};
@@ -39,7 +38,6 @@ function resolveFullPath(el, attribute){
     const ending = attr === './' ? '' : '.';
     return attr.replace('./', resolveFullPath(parent, attribute) + ending);
   } else {
-
     return resolveFullPath(parent, attribute);
   }
 }
@@ -52,7 +50,6 @@ function modifyList(type, el){
   const list = _get(_content, listpath);
 
   removeEditorModules(el, datapath);
-
 
   switch(type){
     case 'clone':
@@ -80,9 +77,7 @@ function modifyList(type, el){
     default:
       addEditorModules(el, true);
       break;
-
   }
-
 }
 
 function onEditorBlur(evt){

@@ -13,7 +13,11 @@
   },
   "keywords": [
     "editor",
-    "CMS"
+    "CMS",
+    "express",
+    "handlebars",
+    "content editing",
+    "medium-editor"
   ],
   "author": "peter@superkrut.se",
   "license": "MIT",

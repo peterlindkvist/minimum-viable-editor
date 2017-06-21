@@ -10295,7 +10295,6 @@ var html = __webpack_require__(1);
 var service = __webpack_require__(2);
 
 var _config = MVE_CONFIG;
-console.log("_config", _config);
 service.setup(_config);
 
 var _content = void 0,
@@ -10335,7 +10334,6 @@ function resolveFullPath(el, attribute) {
     var ending = attr === './' ? '' : '.';
     return attr.replace('./', resolveFullPath(parent, attribute) + ending);
   } else {
-
     return resolveFullPath(parent, attribute);
   }
 }
@@ -10379,7 +10377,6 @@ function modifyList(type, el) {
     default:
       addEditorModules(el, true);
       break;
-
   }
 }
 

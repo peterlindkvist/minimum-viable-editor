@@ -8,7 +8,7 @@ const assetsRouter = require('./server/routers/assets');
 
 let _config, _storage;
 
-function setup(config){
+function setConfig(config){
   _config = config;
   assetsRouter.setup(config);
   contentRouter.setup(config);
@@ -20,7 +20,7 @@ function basicAuth(){
   }));
 }
 
-function simpleSetup(config){
+function setup(config){
   const dataPath = config.dataPath || path.join(__dirname, '..', 'data');
 
   const conf = Object.assign({}, {
@@ -36,23 +36,24 @@ function simpleSetup(config){
     mediumOptions : undefined
   }, config);
 
-  setup(conf);
+  setConfig(conf);
 
   const router = express.Router();
 
   router.use(conf.editorUrl, assetsRouter); // add the public assets router
   router.use(conf.editorUrl, conf.auth, contentRouter); // add the private content router (behind some kind of authentification)
+  
   return router;
 }
 
 module.exports = {
-  setup,
+  setConfig,
   getContent : contentRouter.getContent,
   addContent : contentRouter.addContent,
   getMetaData : contentRouter.getMetaData,
   contentRouter : contentRouter,
   assetsRouter : assetsRouter,
-  simpleSetup,
+  setup,
   basicAuth,
   treeEditor : treeEditor.render
 }
